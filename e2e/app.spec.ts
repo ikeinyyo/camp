@@ -1,4 +1,10 @@
 import { expect, test } from "@playwright/test";
+import packageJson from "../package.json";
+import { schedule } from "../src/config/schedule";
+
+const domino = schedule
+  .flatMap((day) => day.events)
+  .find((event) => event.id === "domino-championship");
 
 test("muestra la portada del evento", async ({ page }) => {
   await page.goto("/");
@@ -10,7 +16,7 @@ test("muestra la portada del evento", async ({ page }) => {
     page.getByRole("heading", { level: 1, name: "Gallardo Camp 2026" }),
   ).toBeVisible();
   await expect(page).toHaveTitle(/Gallardo Camp/);
-  await expect(page.getByText("v0.1.0", { exact: true })).toBeAttached();
+  await expect(page.getByText(`v${packageJson.version}`, { exact: true })).toBeAttached();
 });
 
 test("adapta la navegación a cada tamaño de pantalla", async ({ page }, testInfo) => {
@@ -29,6 +35,37 @@ test("adapta la navegación a cada tamaño de pantalla", async ({ page }, testIn
   await expect(page).toHaveURL(/\/agenda$/);
   await page.getByRole("link", { name: "Gallardo Camp", exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
+});
+
+test("separa el acceso y el registro de participantes", async ({ page }) => {
+  await page.goto("/login");
+
+  await expect(page.getByRole("heading", { level: 1, name: "Iniciar sesión" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Crear usuario" }).last().click();
+
+  await expect(page).toHaveURL(/\/registro$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Crear usuario" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Crear y entrar" })).toBeVisible();
+
+  const registerForm = page.locator('form[action="/login/register"]');
+  await registerForm.getByLabel("Usuario").fill("paco");
+  await registerForm.getByLabel(/Nombre visible/).fill("");
+  await registerForm.getByLabel("Contraseña").fill("paco123");
+  await expect
+    .poll(() => registerForm.evaluate((form: HTMLFormElement) => form.checkValidity()))
+    .toBe(true);
+});
+
+test("muestra las opciones de acceso en el desplegable", async ({ page }) => {
+  await page.goto("/");
+  await page.getByText("Acceso", { exact: true }).click();
+
+  await expect(page.getByRole("link", { name: "Iniciar sesión" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Crear usuario" })).toBeVisible();
+
+  await page.getByRole("heading", { level: 1 }).click();
+  await expect(page.getByRole("link", { name: "Iniciar sesión" })).toBeHidden();
 });
 
 test("permite consultar la agenda y sus detalles", async ({ page }, testInfo) => {
@@ -84,7 +121,9 @@ test("permite consultar la agenda y sus detalles", async ({ page }, testInfo) =>
   }
 
   await expect(page.getByRole("dialog")).toBeVisible();
-  await expect(page.getByRole("dialog").getByText("El Campo", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("dialog").getByText(domino?.location ?? "", { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole("dialog").getByText(/^(Obligatoria|Opcional)$/),
   ).toBeVisible();

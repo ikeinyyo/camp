@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { cookies } from "next/headers";
 import { Footer } from "@/features/footer/Footer";
 import { NavBar } from "@/features/navigation/NavBar";
+import { getUsersByIds, type User } from "@/lib/users";
+import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,13 +12,26 @@ export const metadata: Metadata = {
   description: "Web oficial del evento Gallardo Camp 2026.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
+  const cookieStore = await cookies();
+  let activeUsers: User[] = [];
+  let activeUserId: string | null = null;
+  try {
+    const session = readUserSessionToken(cookieStore.get(USER_COOKIE_NAME)?.value);
+    if (session) {
+      activeUsers = await getUsersByIds(session.userIds);
+      activeUserId = session.activeUserId;
+    }
+  } catch {
+    // Public pages remain available if storage or session configuration fails.
+  }
+
   return (
     <html lang="es">
       <body>
-        <NavBar />
+        <NavBar activeUsers={activeUsers} activeUserId={activeUserId} />
         {children}
         <Footer />
       </body>
