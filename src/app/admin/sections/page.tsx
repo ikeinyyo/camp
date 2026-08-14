@@ -28,14 +28,14 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
   }
 
   return (
-    <main className="min-h-screen px-6 py-12">
+    <main className="min-h-screen px-4 py-7 sm:px-6 sm:py-12">
       <div className="mx-auto max-w-7xl">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6">
+        <header className="flex flex-col items-stretch gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:pb-6">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">Gallardo Camp 2026</p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight">Administración</h1>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
             <Link href="/" className="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)]">Ir a la página del evento</Link>
             <form action="/admin/logout" method="post">
               <button type="submit" className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold transition hover:bg-slate-50">Cerrar sesión</button>
@@ -45,7 +45,7 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
 
         <AdminNavigation active="sections" />
 
-        <section className="py-10">
+        <section className="py-7 sm:py-10">
           <div>
             <h2 className="text-2xl font-bold">Secciones de la aplicación</h2>
             <p className="mt-2 max-w-3xl text-slate-600">Controla qué funcionalidades están disponibles. Una sección desactivada desaparece del menú y sus URLs redirigen a la página principal.</p>
@@ -62,9 +62,9 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
 
           {!storageError && (
             <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgb(15_23_42/0.06)]">
-              <table className="w-full border-collapse text-left">
+              <table className="block w-full text-left md:table md:border-collapse">
                 <caption className="sr-only">Disponibilidad de las secciones</caption>
-                <thead className="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-600">
+                <thead className="hidden border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-600 md:table-header-group">
                   <tr>
                     <th scope="col" className="px-5 py-4">Sección</th>
                     <th scope="col" className="hidden px-5 py-4 md:table-cell">Rutas</th>
@@ -72,10 +72,10 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
                     <th scope="col" className="px-5 py-4 text-right">Acción</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="block divide-y divide-slate-200 md:table-row-group">
                   {sections.map((section) => (
-                    <tr key={section.id} className="odd:bg-white even:bg-slate-50/40">
-                      <td className="px-5 py-5">
+                    <tr key={section.id} className="block p-5 odd:bg-white even:bg-slate-50/40 md:table-row md:p-0">
+                      <td className="block p-0 md:table-cell md:px-5 md:py-5">
                         <span className="block font-bold text-slate-900">{section.name}</span>
                         <span className="mt-1 block max-w-xl text-sm text-slate-500">{section.description}</span>
                       </td>
@@ -84,16 +84,16 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
                           {section.paths.map((path) => <code key={path} className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-700">{path}</code>)}
                         </div>
                       </td>
-                      <td className="px-5 py-5">
+                      <td className="block px-0 pb-3 pt-4 md:table-cell md:px-5 md:py-5">
                         <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${section.enabled ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
                           {section.enabled ? <BsCheckCircleFill aria-hidden="true" /> : <BsDashCircleFill aria-hidden="true" />}
                           {section.enabled ? "Disponible" : "No disponible"}
                         </span>
                       </td>
-                      <td className="px-5 py-5 text-right">
+                      <td className="block p-0 text-left md:table-cell md:px-5 md:py-5 md:text-right">
                         <form action={`/admin/sections/${section.id}`} method="post">
                           <input type="hidden" name="enabled" value={section.enabled ? "false" : "true"} />
-                          <button type="submit" className={`rounded-lg border px-4 py-2 text-sm font-bold transition ${section.enabled ? "border-slate-300 text-slate-700 hover:border-red-300 hover:bg-red-50 hover:text-red-700" : "border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white"}`}>
+                          <button type="submit" className={`w-full rounded-lg border px-4 py-2.5 text-sm font-bold transition md:w-auto ${section.enabled ? "border-slate-300 text-slate-700 hover:border-red-300 hover:bg-red-50 hover:text-red-700" : "border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white"}`}>
                             {section.enabled ? "Deshabilitar" : "Habilitar"}
                           </button>
                         </form>

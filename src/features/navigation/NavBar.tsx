@@ -29,6 +29,9 @@ export function NavBar({
     ...(enabledSections.ranking
       ? [{ label: "Ranking", href: "/ranking" }]
       : []),
+    ...(activeUser && enabledSections.vouchers
+      ? [{ label: "Vales", href: "/vales" }]
+      : []),
   ];
 
   useEffect(() => {

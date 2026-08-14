@@ -33,16 +33,16 @@ export default async function AdminHomePage({ searchParams }: AdminHomePageProps
   }
 
   return (
-    <main className="min-h-screen px-6 py-12">
+    <main className="min-h-screen px-4 py-7 sm:px-6 sm:py-12">
       <div className="mx-auto max-w-7xl">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6">
+        <header className="flex flex-col items-stretch gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:pb-6">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
               Gallardo Camp 2026
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight">Administración</h1>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
             <Link
               href="/"
               className="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)]"
@@ -62,15 +62,15 @@ export default async function AdminHomePage({ searchParams }: AdminHomePageProps
 
         <AdminNavigation active="users" />
 
-        <section className="py-10">
-          <div className="flex flex-wrap items-end justify-between gap-4">
+        <section className="py-7 sm:py-10">
+          <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
             <div>
               <h2 className="text-2xl font-bold">Usuarios</h2>
               <p className="mt-2 text-slate-600">
                 Edita los datos, puntos o establece una contraseña nueva.
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between gap-3 sm:justify-start">
               <span className="rounded-full bg-[var(--primary-subtle)] px-4 py-2 text-sm font-bold text-[var(--primary-dark)]">
                 {users.length} {users.length === 1 ? "usuario" : "usuarios"}
               </span>
@@ -104,7 +104,7 @@ export default async function AdminHomePage({ searchParams }: AdminHomePageProps
           )}
 
           {users.length > 0 && (
-            <div className="mt-8 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgb(15_23_42/0.06)]">
+            <div className="-mx-4 mt-6 overflow-x-auto border-y border-slate-200 bg-white shadow-[0_8px_30px_rgb(15_23_42/0.06)] sm:mx-0 sm:mt-8 sm:rounded-2xl sm:border">
               <table className="w-full min-w-[960px] border-collapse text-left">
                 <caption className="sr-only">Gestión de usuarios registrados</caption>
                 <thead className="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-600">

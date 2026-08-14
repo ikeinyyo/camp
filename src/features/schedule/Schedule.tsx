@@ -7,7 +7,7 @@ import {
   BsStarFill,
   BsTrophyFill,
 } from "react-icons/bs";
-import { schedule, type ScheduleDay, type ScheduleEvent } from "@/config/schedule";
+import type { ScheduleDay, ScheduleEvent } from "@/config/schedule";
 
 const START_HOUR = 9;
 const END_HOUR = 25;
@@ -155,9 +155,11 @@ function DayTimeline({
 function EventDialog({
   event,
   onClose,
+  canRequestPoints,
 }: {
   event: ScheduleEvent;
   onClose: () => void;
+  canRequestPoints: boolean;
 }) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -264,12 +266,17 @@ function EventDialog({
             <dd className="mt-1 text-base leading-7">{event.description}</dd>
           </div>
         </dl>
+        {canRequestPoints && event.participationPoints > 0 && (
+          <a href={`/actividades/${event.id}/vale`} className="mt-6 block rounded-xl bg-[var(--primary)] px-5 py-3 text-center font-bold text-white hover:bg-[var(--primary-dark)]">
+            Generar QR de participación
+          </a>
+        )}
       </article>
     </div>
   );
 }
 
-export function Schedule() {
+export function Schedule({ schedule, canRequestPoints = false }: { schedule: ScheduleDay[]; canRequestPoints?: boolean }) {
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
 
@@ -329,7 +336,7 @@ export function Schedule() {
       </div>
 
       {selectedEvent && (
-        <EventDialog event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+        <EventDialog event={selectedEvent} onClose={() => setSelectedEvent(null)} canRequestPoints={canRequestPoints} />
       )}
     </section>
   );

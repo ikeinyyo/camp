@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import QRCode from "qrcode";
 import { rankUsers } from "@/lib/ranking";
 import { isSectionEnabled } from "@/lib/sections";
 import { getUsersByIds, listUsers } from "@/lib/users";
 import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
+import { listUserPointMovements } from "@/lib/points";
+import { BsCalendarEvent, BsTicketPerforated } from "react-icons/bs";
 
 export const metadata: Metadata = {
   title: "Perfil | Gallardo Camp 2026",
@@ -27,15 +27,10 @@ export default async function ProfilePage() {
   ]);
   const user = users.find((candidate) => candidate.id === session.activeUserId);
   if (!user) redirect("/login");
+  const movements = await listUserPointMovements(user.id);
   const rankedUser = rankUsers(allUsers).find(
     (candidate) => candidate.id === user.id,
   );
-
-  const qrCode = await QRCode.toDataURL(user.username, {
-    width: 360,
-    margin: 2,
-    color: { dark: "#052e16", light: "#ffffff" },
-  });
 
   return (
     <main className="min-h-screen px-4 py-12 sm:px-6">
@@ -58,18 +53,26 @@ export default async function ProfilePage() {
               <span className="text-sm font-bold uppercase tracking-wider text-slate-600">ranking</span>
             </div>
           </div>
-          <Image
-            src={qrCode}
-            alt={`Código QR de ${user.username}`}
-            width={360}
-            height={360}
-            unoptimized
-            className="mt-8 h-auto w-full max-w-72"
-          />
-          <p className="mt-3 text-center text-sm text-slate-500">
-            Este QR identifica a <strong>@{user.username}</strong>.
-          </p>
         </div>
+      </section>
+      <section className="mx-auto mt-8 max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <h2 className="text-2xl font-black">Desglose de puntos</h2>
+        <p className="mt-1 text-sm text-slate-600">Aquí puedes ver de dónde viene cada recompensa.</p>
+        {movements.length === 0 ? (
+          <p className="mt-6 rounded-2xl bg-slate-50 p-5 text-center text-sm text-slate-500">Todavía no hay movimientos registrados.</p>
+        ) : (
+          <ul className="mt-6 divide-y divide-slate-200">
+            {movements.map((movement) => (
+              <li key={movement.id} className="flex items-center gap-4 py-4">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--primary-subtle)] text-xl text-[var(--primary)]">
+                  {movement.source === "voucher" ? <BsTicketPerforated aria-hidden="true" /> : <BsCalendarEvent aria-hidden="true" />}
+                </span>
+                <span className="min-w-0 flex-1"><span className="block truncate font-bold">{movement.concept}</span><span className="block text-sm text-slate-500">{movement.detail} · {movement.method === "qr" ? "QR" : "Asignación manual"}</span></span>
+                <span className="shrink-0 text-lg font-black text-[var(--accent)]">+{movement.points}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </main>
   );

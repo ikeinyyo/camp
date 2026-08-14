@@ -2,9 +2,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { Schedule } from "@/features/schedule/Schedule";
 import { isSectionEnabled } from "@/lib/sections";
+import { getSchedule } from "@/lib/activities";
+import { cookies } from "next/headers";
+import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
 
 export default async function Home() {
   const agendaEnabled = await isSectionEnabled("agenda");
+  const [schedule, cookieStore] = agendaEnabled
+    ? await Promise.all([getSchedule(), cookies()])
+    : [[], await cookies()];
+  const hasSession = Boolean(readUserSessionToken(cookieStore.get(USER_COOKIE_NAME)?.value));
   return (
     <main className="min-h-screen pb-20">
       <section className="relative isolate overflow-hidden bg-emerald-950 text-white">
@@ -53,7 +60,7 @@ export default async function Home() {
 
       {agendaEnabled && (
         <section className="pt-20">
-          <Schedule />
+          <Schedule schedule={schedule} canRequestPoints={hasSession} />
         </section>
       )}
     </main>
