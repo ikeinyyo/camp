@@ -34,6 +34,9 @@ variables en `.env.local` y como secretos/variables de Azure Container Apps:
 AZURE_STORAGE_CONNECTION_STRING=...
 AZURE_STORAGE_USERS_TABLE_NAME=Users
 AZURE_STORAGE_SECTIONS_TABLE_NAME=Sections
+AZURE_STORAGE_VOUCHERS_TABLE_NAME=Vouchers
+AZURE_STORAGE_ACTIVITIES_TABLE_NAME=Activities
+AZURE_STORAGE_POINTS_TABLE_NAME=Points
 USER_SESSION_SECRET=un-secreto-largo-y-aleatorio
 ```
 
@@ -42,11 +45,21 @@ salt y hash; desde `/admin` se pueden sustituir, pero nunca consultar.
 
 Una misma sesión puede mantener varios participantes activos para compartir un
 dispositivo. El desplegable de la navegación permite cambiar el perfil activo,
-añadir otro usuario o cerrar todas las sesiones. `/perfil` muestra sus puntos y
-un QR que codifica el username.
+añadir otro usuario o cerrar todas las sesiones. `/perfil` muestra sus puntos,
+su posición y el historial de recompensas.
 
 Desde `/admin/sections` se puede habilitar o deshabilitar cada sección pública.
 Las secciones desactivadas desaparecen de la navegación y redirigen a la home.
+
+## Vales
+
+La sección `/vales` permite a un participante solicitar la validación de una
+tarea mediante un QR de un solo uso. Desde `/admin/vouchers` se administra el
+catálogo y se aplican vales manualmente. `/admin/activities` administra la
+agenda, la participación y los premios de podio. El lector común está en
+`/admin/validation`. Cada recompensa se registra en el desglose del perfil.
+La cámara requiere
+HTTPS en producción (o `localhost` durante el desarrollo).
 
 ## Comprobaciones
 

@@ -133,7 +133,7 @@ test("permite consultar la agenda y sus detalles", async ({ page }, testInfo) =>
   await expect(page.getByRole("dialog")).not.toBeVisible();
 });
 
-test("protege la administración y permite cerrar sesión", async ({ page }) => {
+test("protege la administración y permite cerrar sesión", async ({ page }, testInfo) => {
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/admin\/login$/);
   await expect(
@@ -146,6 +146,16 @@ test("protege la administración y permite cerrar sesión", async ({ page }) => 
   await expect(
     page.getByRole("heading", { level: 1, name: "Administración" }),
   ).toBeVisible();
+
+  if (testInfo.project.name.includes("mobile")) {
+    const adminNavigation = page.getByRole("navigation", {
+      name: "Navegación móvil de administración",
+    });
+    await expect(adminNavigation).toBeVisible();
+    await expect(
+      adminNavigation.getByRole("link", { name: "Validar" }),
+    ).toBeVisible();
+  }
 
   await page.getByRole("link", { name: "Ir a la página del evento" }).click();
   await expect(page).toHaveURL(/\/$/);

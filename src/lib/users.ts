@@ -110,6 +110,38 @@ export async function getUsersByIds(ids: string[]) {
   return users.filter((user): user is User => user !== null);
 }
 
+export async function getUserById(id: string) {
+  const users = await getUsersByIds([id]);
+  return users[0] ?? null;
+}
+
+export async function awardUserPoints(id: string, points: number) {
+  if (!Number.isInteger(points) || points === 0) {
+    throw new Error("La puntuación debe ser un entero distinto de cero.");
+  }
+
+  const client = await getTableClient();
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const entity = await client.getEntity<UserEntity>(USER_PARTITION, id);
+    entity.points = Math.max(0, (entity.points ?? 0) + points);
+    try {
+      await client.updateEntity(entity, "Replace");
+      return toUser(entity);
+    } catch (error) {
+      if (
+        attempt === 2 ||
+        typeof error !== "object" ||
+        error === null ||
+        !("statusCode" in error) ||
+        error.statusCode !== 412
+      ) {
+        throw error;
+      }
+    }
+  }
+  throw new Error("No se pudieron actualizar los puntos.");
+}
+
 export async function createUser(input: {
   username: string;
   displayName?: string;

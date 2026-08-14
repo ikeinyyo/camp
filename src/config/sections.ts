@@ -21,6 +21,13 @@ export const SECTION_DEFINITIONS = [
     defaultEnabled: true,
   },
   {
+    id: "vouchers",
+    name: "Vales",
+    description: "Catálogo de tareas con recompensa y solicitud mediante QR.",
+    paths: ["/vales"],
+    defaultEnabled: true,
+  },
+  {
     id: "access",
     name: "Acceso",
     description: "Inicio de sesión, registro y selector de usuarios activos.",
