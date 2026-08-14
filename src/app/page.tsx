@@ -1,8 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Schedule } from "@/features/schedule/Schedule";
+import { isSectionEnabled } from "@/lib/sections";
 
-export default function Home() {
+export default async function Home() {
+  const agendaEnabled = await isSectionEnabled("agenda");
   return (
     <main className="min-h-screen pb-20">
       <section className="relative isolate overflow-hidden bg-emerald-950 text-white">
@@ -23,12 +25,12 @@ export default function Home() {
               Un fin de semana para reunirnos, jugar, cocinar, cantar y
               disfrutar en familia.
             </p>
-            <Link
+            {agendaEnabled && <Link
               href="/agenda"
               className="mt-8 inline-flex rounded-2xl bg-[var(--accent)] px-6 py-3 font-bold text-white shadow-lg shadow-black/20 transition hover:bg-[var(--accent-hover)]"
             >
               Ver la agenda completa
-            </Link>
+            </Link>}
           </div>
 
           <div className="relative order-1 mx-auto w-[min(72vw,20rem)] lg:order-2 lg:w-full lg:max-w-96">
@@ -49,9 +51,11 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="pt-20">
-        <Schedule />
-      </section>
+      {agendaEnabled && (
+        <section className="pt-20">
+          <Schedule />
+        </section>
+      )}
     </main>
   );
 }

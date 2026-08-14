@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { BsTrophyFill } from "react-icons/bs";
 import { rankUsers } from "@/lib/ranking";
+import { isSectionEnabled } from "@/lib/sections";
 import { listUsers } from "@/lib/users";
 
 export const metadata: Metadata = {
@@ -16,7 +18,12 @@ const podiumStyles: Record<number, string> = {
 };
 
 export default async function RankingPage() {
-  const users = rankUsers(await listUsers());
+  const [rankingEnabled, allUsers] = await Promise.all([
+    isSectionEnabled("ranking"),
+    listUsers(),
+  ]);
+  if (!rankingEnabled) redirect("/");
+  const users = rankUsers(allUsers);
 
   return (
     <main className="min-h-screen px-4 py-12 sm:px-6">

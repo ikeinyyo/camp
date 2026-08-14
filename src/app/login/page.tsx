@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { isSectionEnabled } from "@/lib/sections";
 
 export const metadata: Metadata = { title: "Iniciar sesión | Gallardo Camp 2026" };
 
@@ -12,6 +14,7 @@ const errorMessages: Record<string, string> = {
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
+  if (!(await isSectionEnabled("access"))) redirect("/");
   const { error } = await searchParams;
 
   return (
