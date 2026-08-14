@@ -11,7 +11,7 @@ export default function AdminHomePage() {
       <div className="mx-auto max-w-5xl">
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
               Gallardo Camp 2026
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight">Administración</h1>
@@ -19,7 +19,7 @@ export default function AdminHomePage() {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/"
-              className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800"
+              className="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)]"
             >
               Ir a la página del evento
             </Link>
