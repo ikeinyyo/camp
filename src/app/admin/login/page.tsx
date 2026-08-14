@@ -15,7 +15,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-16">
       <section className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
           Gallardo Camp 2026
         </p>
         <h1 className="mt-3 text-3xl font-bold tracking-tight">Administración</h1>
@@ -45,11 +45,11 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
             autoComplete="current-password"
             autoFocus
             required
-            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
+            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)]"
           />
           <button
             type="submit"
-            className="mt-4 w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white transition hover:bg-emerald-800"
+            className="mt-4 w-full rounded-xl bg-[var(--accent)] px-4 py-3 font-semibold text-white transition hover:bg-[var(--accent-hover)]"
           >
             Entrar
           </button>

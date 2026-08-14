@@ -3,6 +3,25 @@
 :root {
   --background: #f8faf9;
   --foreground: #17211c;
+  --primary: #047857;
+  --primary-dark: #052e16;
+  --primary-soft: #d1fae5;
+  --primary-subtle: #ecfdf5;
+  --primary-border: #86efac;
+  --accent: #c2410c;
+  --accent-hover: #9a3412;
+  --accent-soft: #ffedd5;
+  --accent-subtle: #fff7ed;
+  --accent-border: #fdba74;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+:focus-visible {
+  outline-color: var(--accent);
 }
 
 * {

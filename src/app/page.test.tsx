@@ -9,6 +9,8 @@ describe("Home", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Gallardo Camp 2026" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Se viene...")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Ver la agenda completa" }),
+    ).toHaveAttribute("href", "/agenda");
   });
 });
