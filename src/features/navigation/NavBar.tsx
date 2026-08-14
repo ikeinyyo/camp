@@ -4,14 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { BsChevronDown, BsPersonCircle, BsX } from "react-icons/bs";
+import type { SectionAvailability } from "@/config/sections";
 import type { User } from "@/lib/users";
 
 export function NavBar({
   activeUsers,
   activeUserId,
+  enabledSections,
 }: {
   activeUsers: User[];
   activeUserId: string | null;
+  enabledSections: SectionAvailability;
 }) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
@@ -19,9 +22,13 @@ export function NavBar({
   const activeUser =
     activeUsers.find((user) => user.id === activeUserId) ?? activeUsers[0];
   const navigationItems = [
-    { label: "Agenda", href: "/agenda" },
-    ...(activeUser ? [{ label: "Perfil", href: "/perfil" }] : []),
-    { label: "Ranking", href: "/ranking" },
+    ...(enabledSections.agenda ? [{ label: "Agenda", href: "/agenda" }] : []),
+    ...(activeUser && enabledSections.profile
+      ? [{ label: "Perfil", href: "/perfil" }]
+      : []),
+    ...(enabledSections.ranking
+      ? [{ label: "Ranking", href: "/ranking" }]
+      : []),
   ];
 
   useEffect(() => {
@@ -68,7 +75,7 @@ export function NavBar({
         </div>
 
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
-          <details
+          {enabledSections.access && <details
             ref={accessMenuRef}
             className="group relative"
             onBlur={(event) => {
@@ -119,7 +126,7 @@ export function NavBar({
                 <Link href="/registro" className="rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-[var(--primary-subtle)]">Crear usuario</Link>
               </div>
             </div>
-          </details>
+          </details>}
 
           <button
           type="button"

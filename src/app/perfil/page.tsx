@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { rankUsers } from "@/lib/ranking";
+import { isSectionEnabled } from "@/lib/sections";
 import { getUsersByIds, listUsers } from "@/lib/users";
 import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
 
@@ -14,6 +15,8 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
+  if (!(await isSectionEnabled("profile"))) redirect("/");
+
   const cookieStore = await cookies();
   const session = readUserSessionToken(cookieStore.get(USER_COOKIE_NAME)?.value);
   if (!session) redirect("/login");

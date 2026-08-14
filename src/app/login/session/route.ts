@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestUrl, isSecureRequest } from "@/lib/admin-auth";
 import { authenticateUser } from "@/lib/users";
+import { isSectionEnabled } from "@/lib/sections";
 import {
   USER_COOKIE_NAME,
   USER_SESSION_MAX_AGE,
@@ -10,6 +11,9 @@ import {
 } from "@/lib/user-session";
 
 export async function POST(request: NextRequest) {
+  if (!(await isSectionEnabled("access"))) {
+    return NextResponse.redirect(getRequestUrl(request, "/"), 303);
+  }
   const formData = await request.formData();
   const username = formData.get("username");
   const password = formData.get("password");

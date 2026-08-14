@@ -12,8 +12,12 @@ import {
   createUserSessionToken,
   readUserSessionToken,
 } from "@/lib/user-session";
+import { isSectionEnabled } from "@/lib/sections";
 
 export async function POST(request: NextRequest) {
+  if (!(await isSectionEnabled("access"))) {
+    return NextResponse.redirect(getRequestUrl(request, "/"), 303);
+  }
   const formData = await request.formData();
   const username = formData.get("username");
   const displayName = formData.get("displayName");

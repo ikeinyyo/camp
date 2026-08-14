@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AdminNavigation } from "@/features/admin/AdminNavigation";
 import { listUsers, type User } from "@/lib/users";
 
 export const dynamic = "force-dynamic";
@@ -58,6 +59,8 @@ export default async function AdminHomePage({ searchParams }: AdminHomePageProps
             </form>
           </div>
         </header>
+
+        <AdminNavigation active="users" />
 
         <section className="py-10">
           <div className="flex flex-wrap items-end justify-between gap-4">
