@@ -7,8 +7,8 @@ describe("Home", () => {
     render(<Home />);
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "Gallardo Camp" }),
+      screen.getByRole("heading", { level: 1, name: "Gallardo Camp 2026" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Próximamente")).toBeInTheDocument();
+    expect(screen.getByText("Se viene...")).toBeInTheDocument();
   });
 });

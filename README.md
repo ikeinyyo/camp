@@ -13,6 +13,18 @@ pnpm dev
 
 La aplicación estará disponible en <http://localhost:3000>.
 
+## Administración
+
+Copia `.env.example` a `.env.local` y define la contraseña de administrador:
+
+```bash
+ADMIN_PASSWORD=una-password-privada
+```
+
+El panel está disponible en <http://localhost:3000/admin>. La parte pública no
+requiere autenticación. Al cambiar `ADMIN_PASSWORD` se invalidan las sesiones
+de administración existentes.
+
 ## Comprobaciones
 
 ```bash
