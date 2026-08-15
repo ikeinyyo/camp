@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { Footer } from "@/features/footer/Footer";
 import { NavBar } from "@/features/navigation/NavBar";
 import { getUsersByIds, type User } from "@/lib/users";
-import { getSafeSectionAvailability } from "@/lib/sections";
+import { getSafeSectionAuthentication, getSafeSectionAvailability } from "@/lib/sections";
 import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
 import "./globals.css";
 
@@ -17,7 +17,7 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   const cookieStore = await cookies();
-  const enabledSections = await getSafeSectionAvailability();
+  const [enabledSections, sectionAuthentication] = await Promise.all([getSafeSectionAvailability(), getSafeSectionAuthentication()]);
   let activeUsers: User[] = [];
   let activeUserId: string | null = null;
   try {
@@ -37,6 +37,7 @@ export default async function RootLayout({
           activeUsers={activeUsers}
           activeUserId={activeUserId}
           enabledSections={enabledSections}
+          sectionAuthentication={sectionAuthentication}
         />
         {children}
         <Footer />

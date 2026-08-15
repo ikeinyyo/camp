@@ -5,6 +5,7 @@ export const SECTION_DEFINITIONS = [
     description: "Agenda del evento y detalle de las actividades.",
     paths: ["/agenda"],
     defaultEnabled: true,
+    defaultRequiresAuth: false,
   },
   {
     id: "profile",
@@ -12,6 +13,7 @@ export const SECTION_DEFINITIONS = [
     description: "Perfil activo, puntos, puesto e historial del participante.",
     paths: ["/perfil"],
     defaultEnabled: true,
+    defaultRequiresAuth: true,
   },
   {
     id: "ranking",
@@ -19,6 +21,7 @@ export const SECTION_DEFINITIONS = [
     description: "Clasificación general de todos los participantes.",
     paths: ["/ranking"],
     defaultEnabled: true,
+    defaultRequiresAuth: true,
   },
   {
     id: "vouchers",
@@ -26,6 +29,7 @@ export const SECTION_DEFINITIONS = [
     description: "Catálogo de tareas con recompensa y solicitud mediante QR.",
     paths: ["/vales"],
     defaultEnabled: true,
+    defaultRequiresAuth: true,
   },
   {
     id: "map",
@@ -33,6 +37,7 @@ export const SECTION_DEFINITIONS = [
     description: "Plano interactivo de las zonas y sus actividades.",
     paths: ["/mapa"],
     defaultEnabled: true,
+    defaultRequiresAuth: false,
   },
   {
     id: "information",
@@ -40,6 +45,7 @@ export const SECTION_DEFINITIONS = [
     description: "Preparativos, funcionamiento de la aplicación e información práctica.",
     paths: ["/informacion"],
     defaultEnabled: true,
+    defaultRequiresAuth: false,
   },
   {
     id: "tapas",
@@ -47,6 +53,7 @@ export const SECTION_DEFINITIONS = [
     description: "Catálogo, votación y clasificación del concurso de tapas.",
     paths: ["/tapas"],
     defaultEnabled: true,
+    defaultRequiresAuth: true,
   },
   {
     id: "talents",
@@ -54,6 +61,7 @@ export const SECTION_DEFINITIONS = [
     description: "Actuaciones, votación y clasificación del concurso de talentos.",
     paths: ["/talentos"],
     defaultEnabled: true,
+    defaultRequiresAuth: true,
   },
   {
     id: "access",
@@ -61,14 +69,22 @@ export const SECTION_DEFINITIONS = [
     description: "Inicio de sesión, registro y selector de usuarios activos.",
     paths: ["/login", "/registro"],
     defaultEnabled: true,
+    defaultRequiresAuth: false,
   },
 ] as const;
 
 export type SectionId = (typeof SECTION_DEFINITIONS)[number]["id"];
 export type SectionAvailability = Record<SectionId, boolean>;
+export type SectionAuthentication = Record<SectionId, boolean>;
 
 export function getDefaultSectionAvailability(): SectionAvailability {
   return Object.fromEntries(
     SECTION_DEFINITIONS.map((section) => [section.id, section.defaultEnabled]),
   ) as SectionAvailability;
+}
+
+export function getDefaultSectionAuthentication(): SectionAuthentication {
+  return Object.fromEntries(
+    SECTION_DEFINITIONS.map((section) => [section.id, section.defaultRequiresAuth]),
+  ) as SectionAuthentication;
 }
