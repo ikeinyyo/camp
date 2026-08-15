@@ -1,20 +1,22 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Schedule } from "@/features/schedule/Schedule";
-import { isSectionEnabled } from "@/lib/sections";
+import { getSafeSectionAuthentication, isSectionEnabled } from "@/lib/sections";
 import { getSchedule } from "@/lib/activities";
 import { cookies } from "next/headers";
 import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
 
 export default async function Home() {
-  const [agendaEnabled, mapEnabled] = await Promise.all([
+  const [agendaAvailable, mapAvailable, sectionAuthentication, cookieStore] = await Promise.all([
     isSectionEnabled("agenda"),
     isSectionEnabled("map"),
+    getSafeSectionAuthentication(),
+    cookies(),
   ]);
-  const [schedule, cookieStore] = agendaEnabled
-    ? await Promise.all([getSchedule(), cookies()])
-    : [[], await cookies()];
   const hasSession = Boolean(readUserSessionToken(cookieStore.get(USER_COOKIE_NAME)?.value));
+  const agendaEnabled = agendaAvailable && (!sectionAuthentication.agenda || hasSession);
+  const mapEnabled = mapAvailable && (!sectionAuthentication.map || hasSession);
+  const schedule = agendaEnabled ? await getSchedule() : [];
   return (
     <main className="min-h-screen pb-20">
       <section className="relative isolate overflow-hidden bg-emerald-950 text-white">

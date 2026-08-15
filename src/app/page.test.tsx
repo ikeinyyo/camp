@@ -4,6 +4,7 @@ import Home from "./page";
 
 vi.mock("@/lib/sections", () => ({
   isSectionEnabled: async () => true,
+  getSafeSectionAuthentication: async () => ({ agenda: false, map: false }),
 }));
 vi.mock("@/lib/activities", () => ({
   getSchedule: async () => [

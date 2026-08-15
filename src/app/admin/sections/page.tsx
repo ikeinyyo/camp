@@ -48,7 +48,7 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
         <section className="py-7 sm:py-10">
           <div>
             <h2 className="text-2xl font-bold">Secciones de la aplicación</h2>
-            <p className="mt-2 max-w-3xl text-slate-600">Controla qué funcionalidades están disponibles. Una sección desactivada desaparece del menú y sus URLs redirigen a la página principal.</p>
+            <p className="mt-2 max-w-3xl text-slate-600">Controla qué funcionalidades están disponibles y cuáles necesitan un usuario activo. Una sección desactivada redirige a la página principal; una sección protegida redirige al login.</p>
           </div>
 
           {saved === "true" && <p role="status" className="mt-6 rounded-2xl bg-[var(--primary-subtle)] p-4 text-sm font-semibold text-[var(--primary-dark)]">Configuración actualizada correctamente.</p>}
@@ -69,6 +69,7 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
                     <th scope="col" className="px-5 py-4">Sección</th>
                     <th scope="col" className="hidden px-5 py-4 md:table-cell">Rutas</th>
                     <th scope="col" className="px-5 py-4">Estado</th>
+                    <th scope="col" className="px-5 py-4">Autenticación</th>
                     <th scope="col" className="px-5 py-4 text-right">Acción</th>
                   </tr>
                 </thead>
@@ -90,12 +91,21 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
                           {section.enabled ? "Disponible" : "No disponible"}
                         </span>
                       </td>
+                      <td className="block px-0 pb-3 md:table-cell md:px-5 md:py-5">
+                        <form action={`/admin/sections/${section.id}`} method="post" className="flex flex-wrap items-center gap-2">
+                          <input type="hidden" name="enabled" value={String(section.enabled)} />
+                          <label className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-bold ${section.id === "access" ? "cursor-not-allowed bg-slate-50 text-slate-400" : "cursor-pointer border-orange-200 bg-orange-50 text-orange-800"}`}>
+                            <input type="checkbox" name="requiresAuth" value="true" defaultChecked={section.requiresAuth} disabled={section.id === "access"} className="h-4 w-4 accent-[var(--accent)]" />
+                            Requiere usuario
+                          </label>
+                          <button type="submit" disabled={section.id === "access"} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">Guardar</button>
+                        </form>
+                      </td>
                       <td className="block p-0 text-left md:table-cell md:px-5 md:py-5 md:text-right">
                         <form action={`/admin/sections/${section.id}`} method="post">
                           <input type="hidden" name="enabled" value={section.enabled ? "false" : "true"} />
-                          <button type="submit" className={`w-full rounded-lg border px-4 py-2.5 text-sm font-bold transition md:w-auto ${section.enabled ? "border-slate-300 text-slate-700 hover:border-red-300 hover:bg-red-50 hover:text-red-700" : "border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white"}`}>
-                            {section.enabled ? "Deshabilitar" : "Habilitar"}
-                          </button>
+                          <input type="hidden" name="requiresAuth" value={String(section.requiresAuth)} />
+                          <button type="submit" className={`w-full rounded-lg border px-4 py-2.5 text-sm font-bold transition md:w-auto ${section.enabled ? "border-slate-300 text-slate-700 hover:border-red-300 hover:bg-red-50 hover:text-red-700" : "border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white"}`}>{section.enabled ? "Deshabilitar" : "Habilitar"}</button>
                         </form>
                       </td>
                     </tr>

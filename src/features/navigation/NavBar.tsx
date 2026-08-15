@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { BsChevronDown, BsPersonCircle, BsX } from "react-icons/bs";
-import type { SectionAvailability } from "@/config/sections";
+import type { SectionAuthentication, SectionAvailability, SectionId } from "@/config/sections";
 import type { User } from "@/lib/users";
 import { UserAvatar } from "@/features/users/UserAvatar";
 
@@ -12,36 +12,38 @@ export function NavBar({
   activeUsers,
   activeUserId,
   enabledSections,
+  sectionAuthentication,
 }: {
   activeUsers: User[];
   activeUserId: string | null;
   enabledSections: SectionAvailability;
+  sectionAuthentication: SectionAuthentication;
 }) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const accessMenuRef = useRef<HTMLDetailsElement>(null);
   const activeUser =
     activeUsers.find((user) => user.id === activeUserId) ?? activeUsers[0];
-  const navigationItems = [
-    ...(enabledSections.agenda ? [{ label: "Agenda", href: "/agenda" }] : []),
-    ...(enabledSections.map ? [{ label: "Mapa", href: "/mapa" }] : []),
-    ...(enabledSections.information ? [{ label: "Información", href: "/informacion" }] : []),
+  const navigationItems: Array<{ label: string; href: string; section: SectionId }> = [
+    ...(enabledSections.agenda ? [{ label: "Agenda", href: "/agenda", section: "agenda" as const }] : []),
+    ...(enabledSections.map ? [{ label: "Mapa", href: "/mapa", section: "map" as const }] : []),
+    ...(enabledSections.information ? [{ label: "Información", href: "/informacion", section: "information" as const }] : []),
     ...(activeUser && enabledSections.profile
-      ? [{ label: "Perfil", href: "/perfil" }]
+      ? [{ label: "Perfil", href: "/perfil", section: "profile" as const }]
       : []),
     ...(activeUser && enabledSections.vouchers
-      ? [{ label: "Vales", href: "/vales" }]
+      ? [{ label: "Vales", href: "/vales", section: "vouchers" as const }]
       : []),
     ...(enabledSections.tapas
-      ? [{ label: "Tapas", href: "/tapas" }]
+      ? [{ label: "Tapas", href: "/tapas", section: "tapas" as const }]
       : []),
     ...(enabledSections.talents
-      ? [{ label: "Talentos", href: "/talentos" }]
+      ? [{ label: "Talentos", href: "/talentos", section: "talents" as const }]
       : []),
     ...(enabledSections.ranking
-      ? [{ label: "Ranking", href: "/ranking" }]
+      ? [{ label: "Ranking", href: "/ranking", section: "ranking" as const }]
       : []),
-  ];
+  ].filter((item) => !sectionAuthentication[item.section] || Boolean(activeUser));
 
   useEffect(() => {
     function closeWhenClickingOutside(event: PointerEvent) {

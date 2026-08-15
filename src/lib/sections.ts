@@ -1,23 +1,30 @@
 import "server-only";
 
 import { TableClient, type TableEntity } from "@azure/data-tables";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import {
   SECTION_DEFINITIONS,
   getDefaultSectionAvailability,
+  getDefaultSectionAuthentication,
   type SectionAvailability,
+  type SectionAuthentication,
   type SectionId,
 } from "@/config/sections";
 import { STORAGE_SETTINGS } from "@/config/storage";
+import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
 
 const SECTION_PARTITION = "section";
 
 type SectionEntity = TableEntity<{
   enabled: boolean;
+  requiresAuth?: boolean;
   updatedAt: string;
 }>;
 
 export type AppSection = (typeof SECTION_DEFINITIONS)[number] & {
   enabled: boolean;
+  requiresAuth: boolean;
 };
 
 let tableReady: Promise<TableClient> | undefined;
@@ -60,6 +67,7 @@ export async function listSections(): Promise<AppSection[]> {
           partitionKey: SECTION_PARTITION,
           rowKey: definition.id,
           enabled: definition.defaultEnabled,
+          requiresAuth: definition.defaultRequiresAuth,
           updatedAt: new Date().toISOString(),
         };
         try {
@@ -80,7 +88,7 @@ export async function listSections(): Promise<AppSection[]> {
           );
         }
       }
-      return { ...definition, enabled: entity.enabled };
+      return { ...definition, enabled: entity.enabled, requiresAuth: definition.id === "access" ? false : (entity.requiresAuth ?? definition.defaultRequiresAuth) };
     }),
   );
 }
@@ -99,11 +107,40 @@ export async function getSafeSectionAvailability() {
   }
 }
 
+export async function getSectionAuthentication(): Promise<SectionAuthentication> {
+  return Object.fromEntries(
+    (await listSections()).map((section) => [section.id, section.requiresAuth]),
+  ) as SectionAuthentication;
+}
+
+export async function getSafeSectionAuthentication() {
+  try {
+    return await getSectionAuthentication();
+  } catch {
+    return getDefaultSectionAuthentication();
+  }
+}
+
+export async function getSectionAccess(id: SectionId) {
+  const section = (await listSections()).find((item) => item.id === id);
+  return section ?? { ...SECTION_DEFINITIONS.find((item) => item.id === id)!, enabled: false, requiresAuth: false };
+}
+
+export async function enforceSectionAccess(id: SectionId) {
+  const section = await getSectionAccess(id);
+  if (!section.enabled) redirect("/");
+  if (section.requiresAuth) {
+    const cookieStore = await cookies();
+    const session = readUserSessionToken(cookieStore.get(USER_COOKIE_NAME)?.value);
+    if (!session) redirect("/login");
+  }
+}
+
 export async function isSectionEnabled(id: SectionId) {
   return (await getSafeSectionAvailability())[id];
 }
 
-export async function updateSection(id: SectionId, enabled: boolean) {
+export async function updateSection(id: SectionId, enabled: boolean, requiresAuth: boolean) {
   if (!SECTION_DEFINITIONS.some((section) => section.id === id)) {
     throw new Error("La sección indicada no existe.");
   }
@@ -113,6 +150,7 @@ export async function updateSection(id: SectionId, enabled: boolean) {
       partitionKey: SECTION_PARTITION,
       rowKey: id,
       enabled,
+      requiresAuth: id === "access" ? false : requiresAuth,
       updatedAt: new Date().toISOString(),
     },
     "Merge",
