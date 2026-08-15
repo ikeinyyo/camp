@@ -9,7 +9,7 @@ export const SECTION_DEFINITIONS = [
   {
     id: "profile",
     name: "Perfil",
-    description: "Perfil activo, puntos, puesto y código QR del participante.",
+    description: "Perfil activo, puntos, puesto e historial del participante.",
     paths: ["/perfil"],
     defaultEnabled: true,
   },
@@ -25,6 +25,13 @@ export const SECTION_DEFINITIONS = [
     name: "Vales",
     description: "Catálogo de tareas con recompensa y solicitud mediante QR.",
     paths: ["/vales"],
+    defaultEnabled: true,
+  },
+  {
+    id: "tapas",
+    name: "Concurso de tapas",
+    description: "Catálogo, votación y clasificación del concurso de tapas.",
+    paths: ["/tapas"],
     defaultEnabled: true,
   },
   {

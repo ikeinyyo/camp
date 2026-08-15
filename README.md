@@ -37,6 +37,8 @@ AZURE_STORAGE_SECTIONS_TABLE_NAME=Sections
 AZURE_STORAGE_VOUCHERS_TABLE_NAME=Vouchers
 AZURE_STORAGE_ACTIVITIES_TABLE_NAME=Activities
 AZURE_STORAGE_POINTS_TABLE_NAME=Points
+AZURE_STORAGE_TAPAS_TABLE_NAME=Tapas
+AZURE_STORAGE_TAPAS_CONTAINER_NAME=tapas
 USER_SESSION_SECRET=un-secreto-largo-y-aleatorio
 ```
 
@@ -60,6 +62,15 @@ agenda, la participación y los premios de podio. El lector común está en
 `/admin/validation`. Cada recompensa se registra en el desglose del perfil.
 La cámara requiere
 HTTPS en producción (o `localhost` durante el desarrollo).
+
+## Concurso de tapas
+
+La sección `/tapas` muestra el catálogo, la votación o el ranking según el
+estado configurado en `/admin/tapas`. Cada participante puede emitir una única
+papeleta con 5, 3 y 1 puntos para tapas diferentes. Los empates se resuelven
+por votos de 5, después de 3 y finalmente de 1; si persisten, comparten puesto.
+Las fotografías cuadradas
+se almacenan en un contenedor privado de Azure Blob Storage.
 
 ## Comprobaciones
 

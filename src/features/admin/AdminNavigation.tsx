@@ -1,11 +1,12 @@
 import Link from "next/link";
 
-export function AdminNavigation({ active }: { active: "users" | "sections" | "vouchers" | "activities" | "validation" }) {
+export function AdminNavigation({ active }: { active: "users" | "sections" | "vouchers" | "activities" | "validation" | "tapas" }) {
   const items = [
     { id: "users", label: "Usuarios", href: "/admin" },
     { id: "sections", label: "Secciones", href: "/admin/sections" },
     { id: "vouchers", label: "Vales", href: "/admin/vouchers" },
     { id: "activities", label: "Actividades", href: "/admin/activities" },
+    { id: "tapas", label: "Tapas", href: "/admin/tapas" },
     { id: "validation", label: "Validación", href: "/admin/validation" },
   ] as const;
 

@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BsCalendarEvent, BsGear, BsPeople, BsQrCodeScan, BsTicketPerforated } from "react-icons/bs";
+import { BsCalendarEvent, BsPeople, BsQrCodeScan, BsTicketPerforated } from "react-icons/bs";
+import { GiMeal } from "react-icons/gi";
 
 const items = [
   { href: "/admin", label: "Usuarios", icon: BsPeople },
   { href: "/admin/activities", label: "Agenda", icon: BsCalendarEvent },
   { href: "/admin/validation", label: "Validar", icon: BsQrCodeScan, primary: true },
   { href: "/admin/vouchers", label: "Vales", icon: BsTicketPerforated },
-  { href: "/admin/sections", label: "Secciones", icon: BsGear },
+  { href: "/admin/tapas", label: "Tapas", icon: GiMeal },
 ] as const;
 
 export function ValidationShortcut() {
