@@ -7,7 +7,10 @@ import { cookies } from "next/headers";
 import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
 
 export default async function Home() {
-  const agendaEnabled = await isSectionEnabled("agenda");
+  const [agendaEnabled, mapEnabled] = await Promise.all([
+    isSectionEnabled("agenda"),
+    isSectionEnabled("map"),
+  ]);
   const [schedule, cookieStore] = agendaEnabled
     ? await Promise.all([getSchedule(), cookies()])
     : [[], await cookies()];
@@ -32,12 +35,20 @@ export default async function Home() {
               Un fin de semana para reunirnos, jugar, cocinar, cantar y
               disfrutar en familia.
             </p>
-            {agendaEnabled && <Link
-              href="/agenda"
-              className="mt-8 inline-flex rounded-2xl bg-[var(--accent)] px-6 py-3 font-bold text-white shadow-lg shadow-black/20 transition hover:bg-[var(--accent-hover)]"
-            >
-              Ver la agenda completa
-            </Link>}
+            {(agendaEnabled || mapEnabled) && <div className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start">
+              {agendaEnabled && <Link
+                href="/agenda"
+                className="inline-flex rounded-2xl bg-[var(--accent)] px-6 py-3 font-bold text-white shadow-lg shadow-black/20 transition hover:bg-[var(--accent-hover)]"
+              >
+                Ver la agenda completa
+              </Link>}
+              {mapEnabled && <Link
+                href="/mapa"
+                className="inline-flex rounded-2xl border border-emerald-300/60 bg-white/10 px-6 py-3 font-bold text-white backdrop-blur-sm transition hover:bg-white/20"
+              >
+                Ver el mapa
+              </Link>}
+            </div>}
           </div>
 
           <div className="relative order-1 mx-auto w-[min(72vw,20rem)] lg:order-2 lg:w-full lg:max-w-96">

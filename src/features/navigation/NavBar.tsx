@@ -24,6 +24,7 @@ export function NavBar({
     activeUsers.find((user) => user.id === activeUserId) ?? activeUsers[0];
   const navigationItems = [
     ...(enabledSections.agenda ? [{ label: "Agenda", href: "/agenda" }] : []),
+    ...(enabledSections.map ? [{ label: "Mapa", href: "/mapa" }] : []),
     ...(activeUser && enabledSections.profile
       ? [{ label: "Perfil", href: "/perfil" }]
       : []),
