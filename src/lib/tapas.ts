@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { BlobServiceClient } from "@azure/storage-blob";
 import { TableClient, type TableEntity } from "@azure/data-tables";
 import { getUsersByIds } from "./users";
+import { STORAGE_SETTINGS } from "@/config/storage";
 export { rankTapas } from "./tapas-ranking";
 
 const TAPA_PARTITION = "tapa";
@@ -14,6 +15,7 @@ const CONFIG_ROW = "contest";
 export type ContestState = "catalog" | "voting" | "ranking";
 export type Tapa = { id: string; name: string; description: string; participantIds: string[]; participantNames: string[]; imageUrl: string; active: boolean };
 export type TapaVote = { userId: string; displayName: string; firstId: string; secondId: string; thirdId: string; createdAt: string };
+export class OwnTapaVoteError extends Error {}
 
 type TapaEntity = TableEntity<{ name: string; description: string; participantIds: string; blobName?: string; active: boolean; createdAt: string }>;
 type VoteEntity = TableEntity<{ displayName: string; firstId: string; secondId: string; thirdId: string; createdAt: string }>;
@@ -24,7 +26,7 @@ async function getTableClient() {
   if (!tableReady) tableReady = (async () => {
     const connection = process.env.AZURE_STORAGE_CONNECTION_STRING;
     if (!connection) throw new Error("Falta configurar AZURE_STORAGE_CONNECTION_STRING.");
-    const client = TableClient.fromConnectionString(connection, process.env.AZURE_STORAGE_TAPAS_TABLE_NAME ?? "Tapas");
+    const client = TableClient.fromConnectionString(connection, STORAGE_SETTINGS.tables.tapas);
     await client.createTable();
     return client;
   })().catch((error) => { tableReady = undefined; throw error; });
@@ -34,7 +36,7 @@ async function getTableClient() {
 async function getContainer() {
   const connection = process.env.AZURE_STORAGE_CONNECTION_STRING;
   if (!connection) throw new Error("Falta configurar AZURE_STORAGE_CONNECTION_STRING.");
-  const container = BlobServiceClient.fromConnectionString(connection).getContainerClient(process.env.AZURE_STORAGE_TAPAS_CONTAINER_NAME ?? "tapas");
+  const container = BlobServiceClient.fromConnectionString(connection).getContainerClient(STORAGE_SETTINGS.containers.tapas);
   await container.createIfNotExists();
   return container;
 }
@@ -106,8 +108,13 @@ export async function setContestState(state: ContestState) { await (await getTab
 export async function submitTapaVote(input: { userId: string; displayName: string; firstId: string; secondId: string; thirdId: string }) {
   if (await getContestState() !== "voting") throw new Error("La votación no está activa.");
   if (new Set([input.firstId, input.secondId, input.thirdId]).size !== 3) throw new Error("Selecciona tres tapas diferentes.");
-  const activeIds = new Set((await listTapas()).map((tapa) => tapa.id));
+  const tapas = await listTapas();
+  const activeIds = new Set(tapas.map((tapa) => tapa.id));
   if (![input.firstId, input.secondId, input.thirdId].every((id) => activeIds.has(id))) throw new Error("Alguna tapa no está disponible.");
+  const selectedIds = new Set([input.firstId, input.secondId, input.thirdId]);
+  if (tapas.some((tapa) => selectedIds.has(tapa.id) && tapa.participantIds.includes(input.userId))) {
+    throw new OwnTapaVoteError("No puedes votar una tapa en la que participas.");
+  }
   const entity: VoteEntity = { partitionKey: VOTE_PARTITION, rowKey: input.userId, displayName: input.displayName, firstId: input.firstId, secondId: input.secondId, thirdId: input.thirdId, createdAt: new Date().toISOString() };
   await (await getTableClient()).createEntity(entity);
 }
@@ -116,4 +123,9 @@ export async function listTapaVotes(): Promise<TapaVote[]> {
   const entities = (await getTableClient()).listEntities<VoteEntity>({ queryOptions: { filter: `PartitionKey eq '${VOTE_PARTITION}'` } }); const votes: TapaVote[] = [];
   for await (const entity of entities) votes.push({ userId: entity.rowKey, displayName: entity.displayName, firstId: entity.firstId, secondId: entity.secondId, thirdId: entity.thirdId, createdAt: entity.createdAt });
   return votes.sort((a, b) => a.displayName.localeCompare(b.displayName, "es"));
+}
+
+export async function deleteTapaVote(userId: string) {
+  if (!userId) throw new Error("Falta el participante.");
+  await (await getTableClient()).deleteEntity(VOTE_PARTITION, userId);
 }

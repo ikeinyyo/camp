@@ -1,9 +1,11 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
+import { BlobServiceClient } from "@azure/storage-blob";
 import { TableClient, odata, type TableEntity } from "@azure/data-tables";
 import { hashPassword, verifyPassword } from "./password";
 import { UserValidationError, validateUserInput } from "./user-validation";
+import { STORAGE_SETTINGS } from "@/config/storage";
 
 export { UserValidationError } from "./user-validation";
 
@@ -14,6 +16,8 @@ export type User = {
   username: string;
   displayName: string;
   points: number;
+  status: string;
+  avatarUrl?: string;
 };
 
 type UserEntity = TableEntity<{
@@ -23,6 +27,9 @@ type UserEntity = TableEntity<{
   points: number;
   passwordHash: string;
   createdAt: string;
+  status?: string;
+  avatarBlobName?: string;
+  avatarUpdatedAt?: string;
 }>;
 
 export class UsernameAlreadyExistsError extends Error {}
@@ -37,7 +44,7 @@ async function getTableClient() {
   if (!tableReady) {
     tableReady = (async () => {
       const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
-      const tableName = process.env.AZURE_STORAGE_USERS_TABLE_NAME ?? "Users";
+      const tableName = STORAGE_SETTINGS.tables.users;
       if (!connectionString) {
         throw new Error("Falta configurar AZURE_STORAGE_CONNECTION_STRING.");
       }
@@ -60,7 +67,22 @@ function toUser(entity: UserEntity): User {
     username: entity.username,
     displayName: entity.displayName,
     points: entity.points,
+    status: entity.status ?? "",
+    avatarUrl: entity.avatarBlobName ? `/api/users/${entity.rowKey}/avatar?v=${encodeURIComponent(entity.avatarUpdatedAt ?? "1")}` : undefined,
   };
+}
+
+async function getAvatarContainer() {
+  const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+  if (!connectionString) throw new Error("Falta configurar AZURE_STORAGE_CONNECTION_STRING.");
+  const container = BlobServiceClient.fromConnectionString(connectionString).getContainerClient(STORAGE_SETTINGS.containers.userAvatars);
+  await container.createIfNotExists();
+  return container;
+}
+
+async function uploadAvatar(blobName: string, image: File) {
+  if (!image.type.startsWith("image/") || image.size > 8 * 1024 * 1024) throw new UserValidationError("avatar", "La imagen no es válida.");
+  await (await getAvatarContainer()).getBlockBlobClient(blobName).uploadData(await image.arrayBuffer(), { blobHTTPHeaders: { blobContentType: image.type, blobCacheControl: "public, max-age=3600" } });
 }
 
 async function findUserEntityByUsername(username: string) {
@@ -74,6 +96,11 @@ async function findUserEntityByUsername(username: string) {
 
   for await (const entity of entities) return entity;
   return undefined;
+}
+
+export async function getUserByUsername(username: string) {
+  const entity = await findUserEntityByUsername(username);
+  return entity ? toUser(entity) : null;
 }
 
 export async function listUsers() {
@@ -113,6 +140,24 @@ export async function getUsersByIds(ids: string[]) {
 export async function getUserById(id: string) {
   const users = await getUsersByIds([id]);
   return users[0] ?? null;
+}
+
+export async function getUserAvatar(id: string) {
+  const entity = await (await getTableClient()).getEntity<UserEntity>(USER_PARTITION, id);
+  if (!entity.avatarBlobName) throw new Error("El usuario no tiene avatar.");
+  return (await getAvatarContainer()).getBlobClient(entity.avatarBlobName).download();
+}
+
+export async function updateUserProfile(id: string, input: { displayName: string; status: string; avatar?: File }) {
+  const displayName = input.displayName.trim();
+  const status = input.status.trim();
+  if (displayName.length < 2 || displayName.length > 80) throw new UserValidationError("displayName", "Nombre no válido.");
+  if (status.length > 120) throw new UserValidationError("status", "El estado no puede superar 120 caracteres.");
+  const client = await getTableClient();
+  const current = await client.getEntity<UserEntity>(USER_PARTITION, id);
+  const avatarBlobName = input.avatar?.size ? (current.avatarBlobName ?? `${id}.jpg`) : current.avatarBlobName;
+  if (input.avatar?.size && avatarBlobName) await uploadAvatar(avatarBlobName, input.avatar);
+  await client.updateEntity({ ...current, displayName, status, ...(avatarBlobName ? { avatarBlobName } : {}), ...(input.avatar?.size ? { avatarUpdatedAt: new Date().toISOString() } : {}) }, "Merge");
 }
 
 export async function awardUserPoints(id: string, points: number) {

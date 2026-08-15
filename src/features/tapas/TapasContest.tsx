@@ -28,6 +28,8 @@ export function TapasContest({
   hasVoted,
   voteAction = "/tapas/vote",
   itemLabel = "tapa",
+  createHref,
+  activeUserId,
 }: {
   tapas: RankedTapa[];
   state: ContestState;
@@ -35,8 +37,13 @@ export function TapasContest({
   hasVoted: boolean;
   voteAction?: string;
   itemLabel?: string;
+  createHref?: string;
+  activeUserId?: string;
 }) {
   const [selected, setSelected] = useState<RankedTapa | null>(null);
+  const votableItems = activeUserId
+    ? tapas.filter((item) => !item.participantIds.includes(activeUserId))
+    : tapas;
   const input =
     "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-[var(--accent)]";
 
@@ -67,6 +74,7 @@ export function TapasContest({
           <p className="mx-auto mt-3 max-w-md leading-7 text-slate-600">
             Estamos preparando el concurso. Esperad un poquito: las propuestas aparecerán aquí cuando empiece.
           </p>
+          {createHref && <a href={createHref} className="mt-6 inline-flex rounded-xl bg-[var(--primary)] px-5 py-3 font-bold text-white">{itemLabel === "tapa" ? "Añadir mi tapa" : "Añadir mi actuación"}</a>}
         </div>
       </section>
     );
@@ -74,6 +82,7 @@ export function TapasContest({
 
   return (
     <>
+      {state === "catalog" && createHref && <div className="mb-6 flex justify-center sm:justify-end"><a href={createHref} className="inline-flex rounded-xl bg-[var(--primary)] px-5 py-3 font-bold text-white shadow-sm">+ {itemLabel === "tapa" ? "Añadir mi tapa" : "Añadir mi actuación"}</a></div>}
       {state === "ranking" && (
         <div className="mb-8 rounded-3xl bg-[var(--primary-dark)] p-6 text-center text-white">
           <BsAwardFill className="mx-auto text-4xl text-amber-400" />
@@ -96,6 +105,10 @@ export function TapasContest({
             <p className="mt-5 rounded-xl bg-white p-4 text-center font-bold text-emerald-700">
               Tu voto ya está registrado. ¡Gracias!
             </p>
+          ) : votableItems.length < 3 ? (
+            <p className="mt-5 rounded-xl bg-white p-4 text-center font-bold text-amber-700">
+              Necesitas al menos tres {itemLabel === "tapa" ? "tapas ajenas" : "actuaciones ajenas"} para poder votar.
+            </p>
           ) : (
             <form action={voteAction} method="post" className="mt-5 grid gap-3 md:grid-cols-3">
               {[
@@ -107,7 +120,7 @@ export function TapasContest({
                   {label}
                   <select name={name} required className={input}>
                     <option value="">Elige {itemLabel === "tapa" ? "una tapa" : "una actuación"}…</option>
-                    {tapas.map((tapa) => (
+                    {votableItems.map((tapa) => (
                       <option key={tapa.id} value={tapa.id}>{tapa.name}</option>
                     ))}
                   </select>

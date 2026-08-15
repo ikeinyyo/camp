@@ -1,4 +1,4 @@
-export type UserValidationCode = "username" | "displayName" | "password" | "points";
+export type UserValidationCode = "username" | "displayName" | "password" | "points" | "status" | "avatar";
 
 export class UserValidationError extends Error {
   constructor(

@@ -32,17 +32,11 @@ variables en `.env.local` y como secretos/variables de Azure Container Apps:
 
 ```bash
 AZURE_STORAGE_CONNECTION_STRING=...
-AZURE_STORAGE_USERS_TABLE_NAME=Users
-AZURE_STORAGE_SECTIONS_TABLE_NAME=Sections
-AZURE_STORAGE_VOUCHERS_TABLE_NAME=Vouchers
-AZURE_STORAGE_ACTIVITIES_TABLE_NAME=Activities
-AZURE_STORAGE_POINTS_TABLE_NAME=Points
-AZURE_STORAGE_TAPAS_TABLE_NAME=Tapas
-AZURE_STORAGE_TAPAS_CONTAINER_NAME=tapas
-AZURE_STORAGE_TALENTS_TABLE_NAME=Talents
-AZURE_STORAGE_TALENTS_CONTAINER_NAME=talents
 USER_SESSION_SECRET=un-secreto-largo-y-aleatorio
 ```
+
+Los nombres de tablas y contenedores están centralizados en
+`src/config/storage.ts`; no necesitan variables de entorno.
 
 Las tablas de usuarios y secciones se crean automáticamente. Las contraseñas se guardan con
 salt y hash; desde `/admin` se pueden sustituir, pero nunca consultar.
