@@ -1,0 +1,26 @@
+/* eslint-disable @next/next/no-img-element */
+import Link from "next/link";
+import { BsHouse } from "react-icons/bs";
+import { AdminNavigation } from "@/features/admin/AdminNavigation";
+import { getTalentContestState, listTalents, listTalentVotes } from "@/lib/talents";
+
+export const dynamic = "force-dynamic";
+
+export default async function AdminTalentsPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
+  const [{ saved, error }, talents, votes, state] = await Promise.all([searchParams, listTalents({ includeInactive: true }), listTalentVotes(), getTalentContestState()]);
+  const names = new Map(talents.map((item) => [item.id, item.name]));
+
+  return <main className="min-h-screen min-w-0 max-w-full overflow-x-hidden px-3 py-4 sm:px-6 sm:py-12"><div className="mx-auto min-w-0 max-w-7xl">
+    <header className="flex items-center justify-between gap-3 border-b border-slate-200 pb-4 sm:pb-5"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-[var(--accent)] sm:text-sm">Administración</p><h1 className="mt-1 text-2xl font-black sm:mt-2 sm:text-3xl">Concurso de talentos</h1></div><Link href="/" aria-label="Ir al evento" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-xl text-[var(--primary)] sm:flex sm:w-auto sm:gap-2 sm:border-0 sm:bg-[var(--accent)] sm:px-4 sm:text-sm sm:font-bold sm:text-white"><BsHouse /><span className="hidden sm:inline">Ir al evento</span></Link></header>
+    <AdminNavigation active="talents" />
+    <div className="flex min-w-0 max-w-full flex-col gap-5 py-4 sm:gap-8 sm:py-10">
+      {saved && <p className="rounded-xl bg-emerald-50 p-4 font-bold text-emerald-700">Operación realizada correctamente.</p>}
+      {error && <p className="rounded-xl bg-red-50 p-4 font-bold text-red-700">No se pudo realizar la operación.</p>}
+      <section className="max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"><h2 className="text-xl font-black">Estado del concurso</h2><p className="mt-1 text-sm text-slate-600">Controla qué ven los participantes.</p><form action="/admin/talentos/state" method="post" className="mt-4" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 6, width: "100%", maxWidth: "100%" }}>{([['catalog', 'Catálogo'], ['voting', 'Votación'], ['ranking', 'Ranking']] as const).map(([value, label]) => <button key={value} name="state" value={value} className={`min-w-0 rounded-xl px-3 py-3 text-sm font-bold ${state === value ? value === 'catalog' ? 'bg-[var(--primary)] text-white' : value === 'voting' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--primary-dark)] text-white' : 'bg-slate-100'}`}>{label}</button>)}</form></section>
+      <section className="min-w-0 max-w-full overflow-hidden"><div className="flex min-w-0 flex-col items-start gap-3"><div><h2 className="text-xl font-black sm:text-2xl">Actuaciones</h2><p className="mt-1 text-sm text-slate-600">{talents.length} propuestas registradas.</p></div><Link href="/admin/talentos/new" className="inline-flex max-w-full items-center justify-center self-start rounded-xl bg-[var(--primary)] px-4 py-2.5 text-center text-sm font-bold text-white">+ Crear actuación</Link></div>
+        <div className="mt-4 sm:mt-5" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10, width: "100%", maxWidth: "100%" }}>{talents.map((item) => <article key={item.id} className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><img src={item.imageUrl} alt="" className="aspect-square w-full object-cover" /><div className="min-w-0 p-2.5 sm:p-4"><h3 className="line-clamp-2 min-w-0 text-sm font-black sm:text-base">{item.name}</h3><p className="mt-1 truncate text-[11px] text-slate-500 sm:text-sm">{item.participantNames.join(", ")}</p><div className="mt-2 grid gap-1.5"><Link href={`/admin/talentos/${item.id}`} className="min-w-0 rounded-lg border border-[var(--primary)] px-1 py-2 text-center text-xs font-bold text-[var(--primary)]">Editar</Link><form className="min-w-0" action={`/admin/talentos/${item.id}/delete`} method="post"><button className="w-full min-w-0 rounded-lg border border-red-200 px-1 py-2 text-xs font-bold text-red-700">Borrar</button></form></div></div></article>)}</div>
+      </section>
+      <section className="min-w-0 max-w-full"><h2 className="text-2xl font-black">Votos emitidos</h2><p className="mt-1 text-slate-600">{votes.length} participantes han votado.</p>{votes.length > 0 && <div className="mt-5 max-w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white"><table className="w-full min-w-[680px] text-left"><thead className="bg-slate-50 text-xs uppercase text-slate-600"><tr><th className="p-4">Participante</th><th className="p-4">5 puntos</th><th className="p-4">3 puntos</th><th className="p-4">1 punto</th></tr></thead><tbody className="divide-y divide-slate-200">{votes.map((vote) => <tr key={vote.userId}><td className="p-4 font-bold">{vote.displayName}</td><td className="p-4">{names.get(vote.firstId)}</td><td className="p-4">{names.get(vote.secondId)}</td><td className="p-4">{names.get(vote.thirdId)}</td></tr>)}</tbody></table></div>}</section>
+    </div>
+  </div></main>;
+}

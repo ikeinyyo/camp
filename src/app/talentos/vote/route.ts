@@ -1,0 +1,6 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getRequestUrl } from "@/lib/admin-auth";
+import { submitTalentVote } from "@/lib/talents";
+import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
+import { getUserById } from "@/lib/users";
+export async function POST(request: NextRequest) { const session = readUserSessionToken(request.cookies.get(USER_COOKIE_NAME)?.value); if (!session) return NextResponse.redirect(getRequestUrl(request, "/login"), 303); const user = await getUserById(session.activeUserId); if (!user) return NextResponse.redirect(getRequestUrl(request, "/login"), 303); const data = await request.formData(); try { await submitTalentVote({ userId: user.id, displayName: user.displayName, firstId: String(data.get("firstId")), secondId: String(data.get("secondId")), thirdId: String(data.get("thirdId")) }); return NextResponse.redirect(getRequestUrl(request, "/talentos?voted=true"), 303); } catch (error) { const duplicate = typeof error === "object" && error && "statusCode" in error && error.statusCode === 409; return NextResponse.redirect(getRequestUrl(request, `/talentos?error=${duplicate ? "duplicate" : "vote"}`), 303); } }

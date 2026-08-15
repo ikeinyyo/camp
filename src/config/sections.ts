@@ -35,6 +35,13 @@ export const SECTION_DEFINITIONS = [
     defaultEnabled: true,
   },
   {
+    id: "talents",
+    name: "Concurso de talentos",
+    description: "Actuaciones, votación y clasificación del concurso de talentos.",
+    paths: ["/talentos"],
+    defaultEnabled: true,
+  },
+  {
     id: "access",
     name: "Acceso",
     description: "Inicio de sesión, registro y selector de usuarios activos.",

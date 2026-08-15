@@ -53,7 +53,7 @@ export function VoucherScanner() {
   async function redeem(rawValue: string) {
     const claim = getClaim(rawValue);
     if (!claim) {
-      setError("El código no corresponde a un vale de Gallardo Camp.");
+      setError("El código no corresponde a un vale o actividad de Gallardo Camp.");
       stopScanner();
       return;
     }
@@ -114,22 +114,22 @@ export function VoucherScanner() {
 
   return (
     <section className="min-w-0 max-w-full overflow-hidden rounded-3xl border border-[var(--primary-border)] bg-white shadow-[0_10px_35px_rgb(15_23_42/0.08)]">
-      <div className="bg-[var(--primary-dark)] p-5 text-white sm:flex sm:items-center sm:justify-between sm:gap-8 sm:p-7">
+      <div className="bg-[var(--primary-dark)] p-4 text-white sm:flex sm:items-center sm:justify-between sm:gap-8 sm:p-7">
         <div className="flex items-start gap-4">
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/10 text-2xl text-orange-400">
             <BsQrCodeScan aria-hidden="true" />
           </span>
           <div>
             <h2 className="text-xl font-black sm:text-2xl">Validar un QR</h2>
-            <p className="mt-1 text-sm leading-6 text-emerald-100/80">Apunta al vale del participante y aplicaremos sus puntos.</p>
+            <p className="mt-1 text-sm leading-5 text-emerald-100/80">Escanea un vale o una actividad y aplicaremos los puntos.</p>
           </div>
         </div>
         <button type="button" onClick={startScanner} className="mt-5 inline-flex min-h-14 max-w-full items-center justify-center gap-3 self-stretch rounded-2xl bg-[var(--accent)] px-5 py-3 text-base font-black text-white shadow-lg shadow-black/20 transition active:scale-[0.98] hover:bg-[var(--accent-hover)] sm:mt-0 sm:self-auto sm:px-6">
-          <BsCamera aria-hidden="true" className="text-xl" /> Escanear vale
+          <BsCamera aria-hidden="true" className="text-xl" /> Abrir cámara
         </button>
       </div>
 
-      <div className="p-5 sm:p-7">
+      <div className="p-4 sm:p-7">
         {result && (
           <div role="status" className={`rounded-2xl p-5 text-center ${result.alreadyRedeemed ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-800"}`}>
             {result.alreadyRedeemed ? <BsExclamationTriangleFill aria-hidden="true" className="mx-auto text-3xl" /> : <BsCheckCircleFill aria-hidden="true" className="mx-auto text-4xl" />}
@@ -158,7 +158,7 @@ export function VoucherScanner() {
         <video ref={videoRef} muted playsInline className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,.65),transparent_25%,transparent_70%,rgba(0,0,0,.8))]" />
         <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))] text-white">
-          <div><p className="text-lg font-black">Escanear vale</p><p className="text-xs text-white/70">Gallardo Camp</p></div>
+          <div><p className="text-lg font-black">Validar QR</p><p className="text-xs text-white/70">Vale o actividad</p></div>
           <button type="button" onClick={stopScanner} aria-label="Cerrar escáner" className="grid h-12 w-12 place-items-center rounded-full bg-black/40 text-3xl backdrop-blur"><BsX aria-hidden="true" /></button>
         </div>
         <div className="pointer-events-none absolute inset-0 grid place-items-center px-8">
