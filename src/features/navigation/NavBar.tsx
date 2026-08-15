@@ -25,6 +25,7 @@ export function NavBar({
   const navigationItems = [
     ...(enabledSections.agenda ? [{ label: "Agenda", href: "/agenda" }] : []),
     ...(enabledSections.map ? [{ label: "Mapa", href: "/mapa" }] : []),
+    ...(enabledSections.information ? [{ label: "Información", href: "/informacion" }] : []),
     ...(activeUser && enabledSections.profile
       ? [{ label: "Perfil", href: "/perfil" }]
       : []),

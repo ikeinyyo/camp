@@ -35,6 +35,13 @@ export const SECTION_DEFINITIONS = [
     defaultEnabled: true,
   },
   {
+    id: "information",
+    name: "Información",
+    description: "Preparativos, funcionamiento de la aplicación e información práctica.",
+    paths: ["/informacion"],
+    defaultEnabled: true,
+  },
+  {
     id: "tapas",
     name: "Concurso de tapas",
     description: "Catálogo, votación y clasificación del concurso de tapas.",
