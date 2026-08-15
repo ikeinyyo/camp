@@ -9,17 +9,18 @@ import { UserAvatar } from "@/features/users/UserAvatar";
 
 export const metadata: Metadata = { title: "Iniciar sesión | Gallardo Camp 2026" };
 
-type LoginPageProps = { searchParams: Promise<{ error?: string }> };
+type LoginPageProps = { searchParams: Promise<{ error?: string; registered?: string }> };
 
 const errorMessages: Record<string, string> = {
   invalid: "El usuario o la contraseña no son correctos.",
   missing: "Introduce un usuario y una contraseña.",
   config: "El acceso no está configurado todavía. Avísale al administrador.",
+  pending: "Tu usuario todavía no está validado. Avisa al administrador para que lo valide.",
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   if (!(await isSectionEnabled("access"))) redirect("/");
-  const { error } = await searchParams;
+  const { error, registered } = await searchParams;
   const session = readUserSessionToken((await cookies()).get(USER_COOKIE_NAME)?.value);
   const activeUsers = session ? await getUsersByIds(session.userIds) : [];
 
@@ -35,6 +36,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {error && errorMessages[error] && (
           <p role="alert" className="mt-8 rounded-2xl bg-red-50 p-4 text-center text-sm font-medium text-red-700">{errorMessages[error]}</p>
         )}
+        {registered === "pending" && <p role="status" className="mt-8 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-center text-sm font-medium text-orange-800">Usuario creado correctamente. Avisa al administrador para que lo valide antes de iniciar sesión.</p>}
 
         {activeUsers.length > 0 && <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">Ya están en este dispositivo</p><div className="mt-3 flex flex-wrap gap-3">{activeUsers.map((user) => <Link href={`/perfil/${encodeURIComponent(user.username)}`} key={user.id} className="flex items-center gap-2 rounded-full bg-[var(--primary-subtle)] py-1.5 pl-1.5 pr-3"><UserAvatar user={user} className="h-9 w-9" textClassName="text-sm" /><span className="font-bold text-[var(--primary-dark)]">{user.displayName}</span></Link>)}</div></section>}
 

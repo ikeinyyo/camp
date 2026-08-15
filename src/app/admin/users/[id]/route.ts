@@ -16,6 +16,7 @@ export async function POST(
   const displayName = formData.get("displayName");
   const points = Number(formData.get("points"));
   const password = formData.get("password");
+  const approved = formData.get("approved") === "true";
 
   if (
     typeof username !== "string" ||
@@ -30,6 +31,7 @@ export async function POST(
       username,
       displayName,
       points,
+      approved,
       ...(password ? { password } : {}),
     });
     return NextResponse.redirect(getRequestUrl(request, "/admin?saved=true"), 303);

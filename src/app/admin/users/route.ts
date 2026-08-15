@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await createUser({ username, displayName, password });
+    await createUser({ username, displayName, password, approved: true });
     return NextResponse.redirect(
       getRequestUrl(request, "/admin?saved=created"),
       303,

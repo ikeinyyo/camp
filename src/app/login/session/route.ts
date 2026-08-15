@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestUrl, isSecureRequest } from "@/lib/admin-auth";
-import { authenticateUser } from "@/lib/users";
+import { authenticateUser, UserPendingApprovalError } from "@/lib/users";
 import { isSectionEnabled } from "@/lib/sections";
 import {
   USER_COOKIE_NAME,
@@ -42,7 +42,10 @@ export async function POST(request: NextRequest) {
       maxAge: USER_SESSION_MAX_AGE,
     });
     return response;
-  } catch {
+  } catch (error) {
+    if (error instanceof UserPendingApprovalError) {
+      return NextResponse.redirect(getRequestUrl(request, "/login?error=pending"), 303);
+    }
     return NextResponse.redirect(getRequestUrl(request, "/login?error=config"), 303);
   }
 }
