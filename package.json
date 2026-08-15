@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@azure/data-tables": "^13.3.2",
+    "@azure/storage-blob": "^12.33.0",
     "@zxing/browser": "^0.2.1",
     "next": "16.3.1",
     "qrcode": "^1.5.4",

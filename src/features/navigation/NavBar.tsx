@@ -32,6 +32,9 @@ export function NavBar({
     ...(activeUser && enabledSections.vouchers
       ? [{ label: "Vales", href: "/vales" }]
       : []),
+    ...(enabledSections.tapas
+      ? [{ label: "Tapas", href: "/tapas" }]
+      : []),
   ];
 
   useEffect(() => {
