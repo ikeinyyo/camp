@@ -2,6 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 import { TableClient, type TableEntity } from "@azure/data-tables";
+import { STORAGE_SETTINGS } from "@/config/storage";
 import { awardUserPoints } from "./users";
 
 export type PointSource = "voucher" | "activity";
@@ -34,7 +35,7 @@ async function getTableClient() {
   if (!tableReady) {
     tableReady = (async () => {
       const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
-      const tableName = process.env.AZURE_STORAGE_POINTS_TABLE_NAME ?? "Points";
+      const tableName = STORAGE_SETTINGS.tables.points;
       if (!connectionString) throw new Error("Falta configurar AZURE_STORAGE_CONNECTION_STRING.");
       const client = TableClient.fromConnectionString(connectionString, tableName);
       await client.createTable();

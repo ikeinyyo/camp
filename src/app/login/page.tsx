@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { isSectionEnabled } from "@/lib/sections";
+import { getUsersByIds } from "@/lib/users";
+import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
+import { UserAvatar } from "@/features/users/UserAvatar";
 
 export const metadata: Metadata = { title: "Iniciar sesión | Gallardo Camp 2026" };
 
@@ -16,6 +20,8 @@ const errorMessages: Record<string, string> = {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   if (!(await isSectionEnabled("access"))) redirect("/");
   const { error } = await searchParams;
+  const session = readUserSessionToken((await cookies()).get(USER_COOKIE_NAME)?.value);
+  const activeUsers = session ? await getUsersByIds(session.userIds) : [];
 
   return (
     <main className="min-h-screen px-4 py-12 sm:px-6">
@@ -30,7 +36,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <p role="alert" className="mt-8 rounded-2xl bg-red-50 p-4 text-center text-sm font-medium text-red-700">{errorMessages[error]}</p>
         )}
 
-        <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        {activeUsers.length > 0 && <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">Ya están en este dispositivo</p><div className="mt-3 flex flex-wrap gap-3">{activeUsers.map((user) => <Link href={`/perfil/${encodeURIComponent(user.username)}`} key={user.id} className="flex items-center gap-2 rounded-full bg-[var(--primary-subtle)] py-1.5 pl-1.5 pr-3"><UserAvatar user={user} className="h-9 w-9" textClassName="text-sm" /><span className="font-bold text-[var(--primary-dark)]">{user.displayName}</span></Link>)}</div></section>}
+
+        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:mt-10 sm:p-8">
           <form action="/login/session" method="post" className="grid gap-4">
             <label className="grid gap-2 text-sm font-semibold">
               Usuario

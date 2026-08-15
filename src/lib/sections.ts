@@ -7,6 +7,7 @@ import {
   type SectionAvailability,
   type SectionId,
 } from "@/config/sections";
+import { STORAGE_SETTINGS } from "@/config/storage";
 
 const SECTION_PARTITION = "section";
 
@@ -25,7 +26,7 @@ async function getTableClient() {
   if (!tableReady) {
     tableReady = (async () => {
       const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
-      const tableName = process.env.AZURE_STORAGE_SECTIONS_TABLE_NAME ?? "Sections";
+      const tableName = STORAGE_SETTINGS.tables.sections;
       if (!connectionString) {
         throw new Error("Falta configurar AZURE_STORAGE_CONNECTION_STRING.");
       }

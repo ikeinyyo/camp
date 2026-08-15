@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BsTrophyFill } from "react-icons/bs";
 import { rankUsers } from "@/lib/ranking";
 import { isSectionEnabled } from "@/lib/sections";
 import { listUsers } from "@/lib/users";
+import { UserAvatar } from "@/features/users/UserAvatar";
 
 export const metadata: Metadata = {
   title: "Ranking | Gallardo Camp 2026",
@@ -56,8 +58,7 @@ export default async function RankingPage() {
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <span className="block font-bold text-slate-900">{user.displayName}</span>
-                      <span className="block text-sm text-slate-500">@{user.username}</span>
+                      <Link href={`/perfil/${encodeURIComponent(user.username)}`} className="flex min-w-0 items-center gap-3 rounded-xl transition hover:text-[var(--primary)] focus-visible:outline-2"><UserAvatar user={user} /><span className="min-w-0"><span className="block truncate font-bold">{user.displayName}</span><span className="block truncate text-sm text-slate-500">{user.status || `@${user.username}`}</span></span></Link>
                     </td>
                     <td className="px-4 py-4 text-right text-xl font-black text-[var(--accent)]">{user.points}</td>
                   </tr>

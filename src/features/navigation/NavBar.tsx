@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { BsChevronDown, BsPersonCircle, BsX } from "react-icons/bs";
 import type { SectionAvailability } from "@/config/sections";
 import type { User } from "@/lib/users";
+import { UserAvatar } from "@/features/users/UserAvatar";
 
 export function NavBar({
   activeUsers,
@@ -114,7 +115,8 @@ export function NavBar({
                       <form action="/session/active" method="post" className="min-w-0 flex-1">
                         <input type="hidden" name="userId" value={user.id} />
                         <button type="submit" className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition hover:bg-[var(--primary-subtle)]">
-                          <span className="min-w-0">
+                          <span className="mr-1 shrink-0"><UserAvatar user={user} className="h-9 w-9" textClassName="text-sm" /></span>
+                          <span className="min-w-0 flex-1">
                             <span className="block truncate font-semibold">{user.displayName}</span>
                             <span className="block truncate text-xs text-slate-500">@{user.username}</span>
                           </span>

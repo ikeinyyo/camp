@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminNavigation } from "@/features/admin/AdminNavigation";
 import { listUsers, type User } from "@/lib/users";
+import { UserAvatar } from "@/features/users/UserAvatar";
 
 export const dynamic = "force-dynamic";
 
@@ -132,9 +133,7 @@ export default async function AdminHomePage({ searchParams }: AdminHomePageProps
                           <form id={formId} action={`/admin/users/${user.id}`} method="post" />
                           <label className="sr-only" htmlFor={`${formId}-username`}>Usuario</label>
                           <div className="flex items-center gap-3">
-                            <span aria-hidden="true" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--primary)] text-sm font-black uppercase text-white shadow-sm">
-                              {user.displayName.charAt(0)}
-                            </span>
+                            <UserAvatar user={user} className="h-10 w-10" textClassName="text-sm" />
                             <input id={`${formId}-username`} form={formId} name="username" defaultValue={user.username} required minLength={3} maxLength={32} className={inputClassName} />
                           </div>
                         </td>
