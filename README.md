@@ -39,6 +39,8 @@ AZURE_STORAGE_ACTIVITIES_TABLE_NAME=Activities
 AZURE_STORAGE_POINTS_TABLE_NAME=Points
 AZURE_STORAGE_TAPAS_TABLE_NAME=Tapas
 AZURE_STORAGE_TAPAS_CONTAINER_NAME=tapas
+AZURE_STORAGE_TALENTS_TABLE_NAME=Talents
+AZURE_STORAGE_TALENTS_CONTAINER_NAME=talents
 USER_SESSION_SECRET=un-secreto-largo-y-aleatorio
 ```
 
@@ -71,6 +73,14 @@ papeleta con 5, 3 y 1 puntos para tapas diferentes. Los empates se resuelven
 por votos de 5, después de 3 y finalmente de 1; si persisten, comparten puesto.
 Las fotografías cuadradas
 se almacenan en un contenedor privado de Azure Blob Storage.
+
+## Concurso de talentos
+
+La sección `/talentos` replica el flujo del concurso de tapas para actuaciones
+individuales o en grupo. Desde `/admin/talentos` se gestionan las actuaciones,
+sus participantes, fotografías y el estado de catálogo, votación o ranking.
+Cada participante puede votar una vez, asignando 5, 3 y 1 puntos a actuaciones
+distintas. Se aplican los mismos criterios de desempate que en las tapas.
 
 ## Comprobaciones
 

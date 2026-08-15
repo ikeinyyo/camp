@@ -2,15 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BsCalendarEvent, BsPeople, BsQrCodeScan, BsTicketPerforated } from "react-icons/bs";
-import { GiMeal } from "react-icons/gi";
+import { BsGrid, BsQrCodeScan } from "react-icons/bs";
+import { GiMeal, GiMicrophone } from "react-icons/gi";
 
 const items = [
-  { href: "/admin", label: "Usuarios", icon: BsPeople },
-  { href: "/admin/activities", label: "Agenda", icon: BsCalendarEvent },
   { href: "/admin/validation", label: "Validar", icon: BsQrCodeScan, primary: true },
-  { href: "/admin/vouchers", label: "Vales", icon: BsTicketPerforated },
   { href: "/admin/tapas", label: "Tapas", icon: GiMeal },
+  { href: "/admin/talentos", label: "Talentos", icon: GiMicrophone },
+  { href: "/admin", label: "Más", icon: BsGrid },
 ] as const;
 
 export function ValidationShortcut() {
@@ -19,19 +18,18 @@ export function ValidationShortcut() {
 
   return (
     <>
-      <nav aria-label="Navegación móvil de administración" className="fixed inset-x-0 bottom-0 z-[90] border-t border-slate-200 bg-white/95 px-1 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgb(15_23_42/0.12)] backdrop-blur md:hidden">
-        <ul className="grid grid-cols-5">
+      <nav aria-label="Navegación móvil de administración" className="fixed inset-x-0 bottom-0 z-[90] h-[calc(3.75rem+env(safe-area-inset-bottom))] border-t border-slate-200 bg-white shadow-[0_-6px_18px_rgb(15_23_42/0.12)] md:hidden">
+        <ul className="flex h-[60px] w-full flex-row items-stretch">
           {items.map((item) => {
-            const active = item.href === "/admin" ? pathname === item.href : pathname.startsWith(item.href);
+            const active = item.href === "/admin" ? pathname === item.href || ["/admin/users", "/admin/sections", "/admin/vouchers", "/admin/activities"].some((path) => pathname.startsWith(path)) : pathname.startsWith(item.href);
             const Icon = item.icon;
             const primary = "primary" in item && item.primary;
             return (
-              <li key={item.href} className="min-w-0">
-                <Link href={item.href} aria-current={active ? "page" : undefined} className={`relative flex min-h-[4.25rem] flex-col items-center justify-end gap-1 px-1 pb-2 text-[10px] font-bold transition ${active ? "text-[var(--accent)]" : "text-slate-500"}`}>
-                  <span className={primary ? "absolute -top-5 grid h-14 w-14 place-items-center rounded-full bg-[var(--accent)] text-2xl text-white shadow-lg ring-4 ring-white" : "text-xl"}>
+              <li key={item.href} className="h-[60px] min-w-0 flex-1 basis-1/4">
+                <Link href={item.href} aria-current={active ? "page" : undefined} className={`flex h-full w-full flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-bold leading-none transition ${active ? "text-[var(--accent)]" : "text-slate-500"}`}>
+                  <span className={`grid h-7 w-11 place-items-center rounded-lg text-lg ${primary ? "bg-[var(--accent)] text-white shadow-sm" : active ? "bg-[var(--accent-subtle)]" : ""}`}>
                     <Icon aria-hidden="true" />
                   </span>
-                  {primary && <span className="h-6" />}
                   <span className="truncate">{item.label}</span>
                 </Link>
               </li>

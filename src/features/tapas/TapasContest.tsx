@@ -4,6 +4,8 @@
 import { useEffect, useState } from "react";
 import {
   BsAwardFill,
+  BsChevronDown,
+  BsHourglassSplit,
   BsPeopleFill,
   BsStarFill,
   BsTrophyFill,
@@ -24,11 +26,15 @@ export function TapasContest({
   state,
   loggedIn,
   hasVoted,
+  voteAction = "/tapas/vote",
+  itemLabel = "tapa",
 }: {
   tapas: RankedTapa[];
   state: ContestState;
   loggedIn: boolean;
   hasVoted: boolean;
+  voteAction?: string;
+  itemLabel?: string;
 }) {
   const [selected, setSelected] = useState<RankedTapa | null>(null);
   const input =
@@ -48,6 +54,24 @@ export function TapasContest({
     };
   }, [selected]);
 
+  if (tapas.length === 0) {
+    return (
+      <section className="mx-auto grid min-h-[360px] max-w-2xl place-items-center rounded-3xl border-2 border-dashed border-[var(--primary)]/25 bg-[var(--primary-subtle)] px-6 py-12 text-center">
+        <div>
+          <span className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-white text-4xl text-[var(--accent)] shadow-sm">
+            <BsHourglassSplit />
+          </span>
+          <h2 className="mt-6 text-2xl font-black text-[var(--primary-dark)]">
+            Aún no hay {itemLabel === "tapa" ? "tapas" : "actuaciones"}
+          </h2>
+          <p className="mx-auto mt-3 max-w-md leading-7 text-slate-600">
+            Estamos preparando el concurso. Esperad un poquito: las propuestas aparecerán aquí cuando empiece.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <>
       {state === "ranking" && (
@@ -62,7 +86,7 @@ export function TapasContest({
         <section className="mb-8 rounded-3xl border border-orange-200 bg-orange-50 p-5 sm:p-7">
           <h2 className="text-2xl font-black text-orange-950">La votación está abierta</h2>
           <p className="mt-2 text-sm text-orange-900">
-            Elige tres tapas distintas: tu favorita recibe 5 puntos, la siguiente 3 y la tercera 1.
+            Elige tres {itemLabel === "tapa" ? "tapas distintas" : "actuaciones distintas"}: tu favorita recibe 5 puntos, la siguiente 3 y la tercera 1.
           </p>
           {!loggedIn ? (
             <a href="/login" className="mt-5 block rounded-xl bg-[var(--accent)] px-5 py-3 text-center font-bold text-white">
@@ -73,7 +97,7 @@ export function TapasContest({
               Tu voto ya está registrado. ¡Gracias!
             </p>
           ) : (
-            <form action="/tapas/vote" method="post" className="mt-5 grid gap-3 md:grid-cols-3">
+            <form action={voteAction} method="post" className="mt-5 grid gap-3 md:grid-cols-3">
               {[
                 ["firstId", "🥇 5 puntos"],
                 ["secondId", "🥈 3 puntos"],
@@ -82,7 +106,7 @@ export function TapasContest({
                 <label key={name} className="grid gap-2 text-sm font-bold">
                   {label}
                   <select name={name} required className={input}>
-                    <option value="">Elige una tapa…</option>
+                    <option value="">Elige {itemLabel === "tapa" ? "una tapa" : "una actuación"}…</option>
                     {tapas.map((tapa) => (
                       <option key={tapa.id} value={tapa.id}>{tapa.name}</option>
                     ))}
@@ -129,6 +153,20 @@ export function TapasContest({
                 <BsPeopleFill className="shrink-0" />
                 <span className="truncate">{tapa.participantNames.join(", ")}</span>
               </p>
+              {state === "ranking" && (
+                <div className="mt-3 grid grid-cols-3 gap-1.5 border-t border-slate-100 pt-3 text-center sm:mt-4 sm:gap-2 sm:pt-4">
+                  {[
+                    [tapa.fiveVotes, "5", "text-amber-600"],
+                    [tapa.threeVotes, "3", "text-slate-500"],
+                    [tapa.oneVotes, "1", "text-orange-700"],
+                  ].map(([count, points, color]) => (
+                    <span key={String(points)} className="rounded-lg bg-slate-50 px-1 py-1.5 sm:rounded-xl sm:py-2">
+                      <strong className={`block text-sm sm:text-lg ${color}`}>{count}</strong>
+                      <span className="block text-[9px] font-bold uppercase text-slate-500 sm:text-[11px]">votos de {points}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </button>
         ))}
@@ -143,26 +181,32 @@ export function TapasContest({
             role="dialog"
             aria-modal="true"
             aria-labelledby="tapa-detail-title"
-            className="max-h-[94dvh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
+            className="relative max-h-[94dvh] w-full max-w-xl overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
           >
-            <div className="relative">
-              <img src={selected.imageUrl} alt={selected.name} className="aspect-square w-full object-cover" />
-              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/70 to-transparent" />
-              {state === "ranking" && (
-                <div className="absolute bottom-4 left-4 flex items-center gap-3 text-white">
-                  <span className="grid h-12 min-w-12 place-items-center rounded-full bg-white px-2 text-lg font-black text-[var(--primary-dark)] shadow-lg">
-                    {selected.rank}.º
-                  </span>
-                  <span><strong className="block text-2xl">{selected.score} puntos</strong><span className="text-xs text-white/80">Clasificación final</span></span>
-                </div>
-              )}
-              <button type="button" onClick={() => setSelected(null)} aria-label="Cerrar detalle" className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-full bg-black/60 text-2xl text-white backdrop-blur">
-                <BsX />
-              </button>
-            </div>
+            <button type="button" onClick={() => setSelected(null)} aria-label="Cerrar detalle" className="absolute right-4 top-4 z-20 grid h-11 w-11 place-items-center rounded-full bg-black/70 text-2xl text-white shadow-lg backdrop-blur">
+              <BsX />
+            </button>
 
-            <div className="p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:p-8">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--accent)]">Propuesta del concurso</p>
+            <div className="max-h-[94dvh] overflow-y-auto overscroll-contain">
+              <div className="relative">
+                <img src={selected.imageUrl} alt={selected.name} className="h-[42dvh] min-h-64 w-full object-cover sm:aspect-square sm:h-auto" />
+                <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/70 to-transparent" />
+                {state === "ranking" && (
+                  <div className="absolute bottom-4 left-4 flex items-center gap-3 text-white">
+                    <span className="grid h-12 min-w-12 place-items-center rounded-full bg-white px-2 text-lg font-black text-[var(--primary-dark)] shadow-lg">
+                      {selected.rank}.º
+                    </span>
+                    <span><strong className="block text-2xl">{selected.score} puntos</strong><span className="text-xs text-white/80">Clasificación final</span></span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-center gap-2 border-b border-slate-100 bg-white py-2 text-xs font-bold text-[var(--accent)] sm:hidden">
+                <BsChevronDown className="animate-bounce" /> Desliza para ver todos los detalles
+              </div>
+
+              <div className="p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:p-8">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--accent)]">{itemLabel === "tapa" ? "Propuesta" : "Actuación"} del concurso</p>
               <h2 id="tapa-detail-title" className="mt-2 text-3xl font-black leading-tight">{selected.name}</h2>
 
               <div className="mt-5 flex items-start gap-3 rounded-2xl bg-[var(--primary-subtle)] p-4">
@@ -193,6 +237,7 @@ export function TapasContest({
                   </div>
                 </div>
               )}
+              </div>
             </div>
           </article>
         </div>

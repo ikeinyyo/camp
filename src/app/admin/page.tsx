@@ -62,7 +62,11 @@ export default async function AdminHomePage({ searchParams }: AdminHomePageProps
 
         <AdminNavigation active="users" />
 
-        <section className="py-7 sm:py-10">
+        <nav aria-label="Más opciones de administración" className="grid grid-cols-2 gap-2 py-4 md:hidden">
+          {[{ href: "/admin/activities", label: "Actividades" }, { href: "/admin/vouchers", label: "Vales" }, { href: "/admin/sections", label: "Secciones" }, { href: "/admin/users/new", label: "Crear usuario" }].map((item) => <Link key={item.href} href={item.href} className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-center text-sm font-bold text-[var(--primary-dark)] shadow-sm">{item.label}</Link>)}
+        </nav>
+
+        <section className="py-3 sm:py-10">
           <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
             <div>
               <h2 className="text-2xl font-bold">Usuarios</h2>

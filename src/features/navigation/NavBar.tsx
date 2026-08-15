@@ -26,14 +26,17 @@ export function NavBar({
     ...(activeUser && enabledSections.profile
       ? [{ label: "Perfil", href: "/perfil" }]
       : []),
-    ...(enabledSections.ranking
-      ? [{ label: "Ranking", href: "/ranking" }]
-      : []),
     ...(activeUser && enabledSections.vouchers
       ? [{ label: "Vales", href: "/vales" }]
       : []),
     ...(enabledSections.tapas
       ? [{ label: "Tapas", href: "/tapas" }]
+      : []),
+    ...(enabledSections.talents
+      ? [{ label: "Talentos", href: "/talentos" }]
+      : []),
+    ...(enabledSections.ranking
+      ? [{ label: "Ranking", href: "/ranking" }]
       : []),
   ];
 
@@ -47,6 +50,8 @@ export function NavBar({
     document.addEventListener("pointerdown", closeWhenClickingOutside);
     return () => document.removeEventListener("pointerdown", closeWhenClickingOutside);
   }, []);
+
+  if (pathname.startsWith("/admin")) return null;
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
