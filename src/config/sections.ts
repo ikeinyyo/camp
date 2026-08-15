@@ -28,6 +28,13 @@ export const SECTION_DEFINITIONS = [
     defaultEnabled: true,
   },
   {
+    id: "map",
+    name: "Mapa",
+    description: "Plano interactivo de las zonas y sus actividades.",
+    paths: ["/mapa"],
+    defaultEnabled: true,
+  },
+  {
     id: "tapas",
     name: "Concurso de tapas",
     description: "Catálogo, votación y clasificación del concurso de tapas.",

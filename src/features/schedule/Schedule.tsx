@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   BsGeoAltFill,
@@ -7,6 +8,7 @@ import {
   BsStarFill,
   BsTrophyFill,
 } from "react-icons/bs";
+import { getMapZone } from "@/config/locations";
 import type { ScheduleDay, ScheduleEvent } from "@/config/schedule";
 
 const START_HOUR = 9;
@@ -152,16 +154,22 @@ function DayTimeline({
   );
 }
 
-function EventDialog({
+export function ScheduleEventDialog({
   event,
   onClose,
   canRequestPoints,
+  returnHref = "/agenda",
 }: {
   event: ScheduleEvent;
   onClose: () => void;
   canRequestPoints: boolean;
+  returnHref?: string;
 }) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const mapZone = getMapZone(event.location);
+  const externalMapUrl = event.location === "El Mirador"
+    ? "https://maps.app.goo.gl/b48rKWraVdVx2rBG9"
+    : undefined;
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -215,16 +223,22 @@ function EventDialog({
         </div>
 
         <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
-          <div className="flex items-start gap-3 rounded-2xl bg-[var(--primary-subtle)] p-4">
+          {mapZone ? <Link href={`/mapa?zona=${encodeURIComponent(mapZone.id)}`} onClick={onClose} className="flex items-start gap-3 rounded-2xl bg-[var(--primary-subtle)] p-4 transition hover:bg-[var(--primary-soft)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]" aria-label={`Ver ${event.location} en el mapa`}>
             <BsGeoAltFill
               aria-hidden="true"
               className="mt-0.5 shrink-0 text-xl text-[var(--primary)]"
             />
             <div>
               <dt className="sr-only">Lugar</dt>
-              <dd className="text-base font-semibold">{event.location}</dd>
+              <dd className="text-base font-semibold underline decoration-[var(--primary-border)] underline-offset-4">{event.location}</dd>
             </div>
-          </div>
+          </Link> : externalMapUrl ? <a href={externalMapUrl} target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 rounded-2xl bg-[var(--primary-subtle)] p-4 transition hover:bg-[var(--primary-soft)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]" aria-label={`Abrir ${event.location} en Google Maps`}>
+            <BsGeoAltFill aria-hidden="true" className="mt-0.5 shrink-0 text-xl text-[var(--primary)]" />
+            <div><dt className="sr-only">Lugar</dt><dd className="text-base font-semibold underline decoration-[var(--primary-border)] underline-offset-4">{event.location}</dd></div>
+          </a> : <div className="flex items-start gap-3 rounded-2xl bg-[var(--primary-subtle)] p-4">
+            <BsGeoAltFill aria-hidden="true" className="mt-0.5 shrink-0 text-xl text-[var(--primary)]" />
+            <div><dt className="sr-only">Lugar</dt><dd className="text-base font-semibold">{event.location}</dd></div>
+          </div>}
           <div className="flex items-start gap-3 rounded-2xl bg-[var(--accent-subtle)] p-4">
             <BsPeopleFill
               aria-hidden="true"
@@ -267,7 +281,7 @@ function EventDialog({
           </div>
         </dl>
         {canRequestPoints && event.participationPoints > 0 && (
-          <a href={`/actividades/${event.id}/vale`} className="mt-6 block rounded-xl bg-[var(--primary)] px-5 py-3 text-center font-bold text-white hover:bg-[var(--primary-dark)]">
+          <a href={`/actividades/${event.id}/vale?volver=${encodeURIComponent(returnHref)}`} className="mt-6 block rounded-xl bg-[var(--primary)] px-5 py-3 text-center font-bold text-white hover:bg-[var(--primary-dark)]">
             Generar QR de participación
           </a>
         )}
@@ -336,7 +350,7 @@ export function Schedule({ schedule, canRequestPoints = false }: { schedule: Sch
       </div>
 
       {selectedEvent && (
-        <EventDialog event={selectedEvent} onClose={() => setSelectedEvent(null)} canRequestPoints={canRequestPoints} />
+        <ScheduleEventDialog event={selectedEvent} onClose={() => setSelectedEvent(null)} canRequestPoints={canRequestPoints} />
       )}
     </section>
   );
