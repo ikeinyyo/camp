@@ -17,6 +17,7 @@ export type User = {
   displayName: string;
   points: number;
   status: string;
+  approved: boolean;
   avatarUrl?: string;
 };
 
@@ -30,9 +31,11 @@ type UserEntity = TableEntity<{
   status?: string;
   avatarBlobName?: string;
   avatarUpdatedAt?: string;
+  approved?: boolean;
 }>;
 
 export class UsernameAlreadyExistsError extends Error {}
+export class UserPendingApprovalError extends Error {}
 
 let tableReady: Promise<TableClient> | undefined;
 
@@ -68,6 +71,7 @@ function toUser(entity: UserEntity): User {
     displayName: entity.displayName,
     points: entity.points,
     status: entity.status ?? "",
+    approved: entity.approved ?? true,
     avatarUrl: entity.avatarBlobName ? `/api/users/${entity.rowKey}/avatar?v=${encodeURIComponent(entity.avatarUpdatedAt ?? "1")}` : undefined,
   };
 }
@@ -191,6 +195,7 @@ export async function createUser(input: {
   username: string;
   displayName?: string;
   password: string;
+  approved?: boolean;
 }) {
   const username = input.username.trim();
   const displayName = input.displayName?.trim() || username;
@@ -209,6 +214,7 @@ export async function createUser(input: {
     points: 0,
     passwordHash: await hashPassword(input.password),
     createdAt: new Date().toISOString(),
+    approved: input.approved ?? false,
   };
   await client.createEntity(entity);
   return toUser(entity);
@@ -217,12 +223,13 @@ export async function createUser(input: {
 export async function authenticateUser(username: string, password: string) {
   const entity = await findUserEntityByUsername(username);
   if (!entity || !(await verifyPassword(password, entity.passwordHash))) return null;
+  if (entity.approved === false) throw new UserPendingApprovalError("El usuario está pendiente de validación.");
   return toUser(entity);
 }
 
 export async function updateUser(
   id: string,
-  input: { username: string; displayName: string; points: number; password?: string },
+  input: { username: string; displayName: string; points: number; approved: boolean; password?: string },
 ) {
   const username = input.username.trim();
   const displayName = input.displayName.trim();
@@ -247,6 +254,7 @@ export async function updateUser(
     usernameNormalized: normalizeUsername(username),
     displayName,
     points: input.points,
+    approved: input.approved,
     ...(input.password ? { passwordHash: await hashPassword(input.password) } : {}),
   };
   await client.updateEntity(entity, "Merge");

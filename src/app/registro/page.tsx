@@ -47,7 +47,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
               Contraseña
               <input name="password" type="password" autoComplete="new-password" required minLength={6} className="rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-soft)]" />
             </label>
-            <button type="submit" className="mt-2 rounded-xl bg-[var(--primary)] px-5 py-3 font-bold text-white transition hover:bg-[var(--primary-dark)]">Crear y entrar</button>
+            <button type="submit" className="mt-2 rounded-xl bg-[var(--primary)] px-5 py-3 font-bold text-white transition hover:bg-[var(--primary-dark)]">Crear usuario</button>
           </form>
           <p className="mt-6 text-center text-sm text-slate-600">
             ¿Ya tienes usuario?{" "}

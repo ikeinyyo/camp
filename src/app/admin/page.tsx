@@ -117,6 +117,7 @@ export default async function AdminHomePage({ searchParams }: AdminHomePageProps
                     <th scope="col" className="px-5 py-4">Usuario</th>
                     <th scope="col" className="px-5 py-4">Nombre visible</th>
                     <th scope="col" className="w-32 px-5 py-4">Puntos</th>
+                    <th scope="col" className="px-5 py-4">Validado</th>
                     <th scope="col" className="px-5 py-4">Cambiar contraseña</th>
                     <th scope="col" className="w-32 px-5 py-4 text-right">Acción</th>
                   </tr>
@@ -144,6 +145,12 @@ export default async function AdminHomePage({ searchParams }: AdminHomePageProps
                         <td className="px-5 py-4">
                           <label className="sr-only" htmlFor={`${formId}-points`}>Puntos</label>
                           <input id={`${formId}-points`} form={formId} name="points" type="number" min={0} step={1} defaultValue={user.points} required className={inputClassName} />
+                        </td>
+                        <td className="px-5 py-4">
+                          <label className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold ${user.approved ? "bg-emerald-50 text-emerald-700" : "bg-orange-50 text-orange-700"}`}>
+                            <input form={formId} name="approved" value="true" type="checkbox" defaultChecked={user.approved} className="h-4 w-4 accent-[var(--primary)]" />
+                            {user.approved ? "Validado" : "Pendiente"}
+                          </label>
                         </td>
                         <td className="px-5 py-4">
                           <label className="sr-only" htmlFor={`${formId}-password`}>Nueva contraseña</label>
