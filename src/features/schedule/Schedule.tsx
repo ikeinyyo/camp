@@ -36,6 +36,12 @@ function displayHour(hour: number) {
   return `${String(hour % 24).padStart(2, "0")}:00`;
 }
 
+function mobileStartHour(day: ScheduleDay) {
+  if (day.events.length === 0) return START_HOUR;
+  const firstEventHour = Math.min(...day.events.map((event) => timeToHour(event.start)));
+  return Math.max(0, Math.floor(firstEventHour) - 1);
+}
+
 function duration(event: ScheduleEvent) {
   let minutes = (timeToHour(event.end) - timeToHour(event.start)) * 60;
   if (minutes <= 0) minutes += 24 * 60;
@@ -338,7 +344,7 @@ export function Schedule({ schedule, canRequestPoints = false }: { schedule: Sch
           <DayTimeline
             day={schedule[selectedDay]}
             onSelectEvent={setSelectedEvent}
-            startHour={schedule[selectedDay].id === "friday" ? 22 : START_HOUR}
+            startHour={mobileStartHour(schedule[selectedDay])}
           />
         </div>
       </div>
