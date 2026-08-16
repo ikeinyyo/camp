@@ -37,7 +37,7 @@ const preparations = [
     title: "La banda sonora",
     text: "Únete como colaborador a la lista de Spotify y añade las canciones que no pueden faltar en la Gallardo Camp 2026.",
     action: {
-      href: "https://open.spotify.com/playlist/3xNAhgxAouRQXpIcZC4kXs?si=5b776632974e47f4&pt=e8514830e8d3963a20b7631115b4875e",
+      href: process.env.SPOTIFY_PLAYLIST_URL ?? "",
       label: "Abrir playlist de Spotify",
       external: true,
     },
@@ -74,7 +74,7 @@ export default async function InformationPage() {
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--primary-subtle)] text-xl text-[var(--primary)]"><Icon /></span>
             <h3 className="mt-4 text-xl font-black">{title}</h3>
             <p className="mt-2 leading-7 text-slate-600">{text}</p>
-            {action && (action.external
+            {action?.href && (action.external
               ? <a href={action.href} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex rounded-xl bg-[var(--primary)] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--primary-dark)]">{action.label}</a>
               : <Link href={action.href} className="mt-5 inline-flex rounded-xl bg-[var(--primary)] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--primary-dark)]">{action.label}</Link>)}
           </article>)}
