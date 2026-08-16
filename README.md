@@ -32,6 +32,7 @@ variables en `.env.local` y como secretos/variables de Azure Container Apps:
 
 ```bash
 AZURE_STORAGE_CONNECTION_STRING=...
+SPOTIFY_PLAYLIST_URL=https://open.spotify.com/playlist/...
 USER_SESSION_SECRET=un-secreto-largo-y-aleatorio
 ```
 
