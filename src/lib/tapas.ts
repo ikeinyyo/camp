@@ -17,7 +17,7 @@ export type Tapa = { id: string; name: string; description: string; participantI
 export type TapaVote = { userId: string; displayName: string; firstId: string; secondId: string; thirdId: string; createdAt: string };
 export class OwnTapaVoteError extends Error {}
 
-type TapaEntity = TableEntity<{ name: string; description: string; participantIds: string; blobName?: string; active: boolean; createdAt: string }>;
+type TapaEntity = TableEntity<{ name: string; description: string; participantIds: string; blobName?: string; active: boolean; createdAt: string; updatedAt?: string }>;
 type VoteEntity = TableEntity<{ displayName: string; firstId: string; secondId: string; thirdId: string; createdAt: string }>;
 type ConfigEntity = TableEntity<{ state: ContestState }>;
 
@@ -46,7 +46,8 @@ function parseIds(value: string) { try { const ids = JSON.parse(value); return A
 async function toTapa(entity: TapaEntity): Promise<Tapa> {
   const participantIds = parseIds(entity.participantIds);
   const users = await getUsersByIds(participantIds);
-  return { id: entity.rowKey, name: entity.name, description: entity.description, participantIds, participantNames: users.map((user) => user.displayName), imageUrl: entity.blobName ? `/api/tapas/${entity.rowKey}/image` : "/images/tapa-placeholder.svg", active: entity.active };
+  const imageVersion = encodeURIComponent(entity.updatedAt ?? entity.createdAt);
+  return { id: entity.rowKey, name: entity.name, description: entity.description, participantIds, participantNames: users.map((user) => user.displayName), imageUrl: entity.blobName ? `/api/tapas/${entity.rowKey}/image?v=${imageVersion}` : "/images/tapa-placeholder.png", active: entity.active };
 }
 
 export async function listTapas(options?: { includeInactive?: boolean }) {
@@ -85,7 +86,7 @@ export async function updateTapa(id: string, input: { name: string; description:
   validate(input); const client = await getTableClient(); const current = await client.getEntity<TapaEntity>(TAPA_PARTITION, id);
   const blobName = input.image?.size ? (current.blobName ?? `${id}.jpg`) : current.blobName;
   if (input.image?.size && blobName) await uploadImage(blobName, input.image);
-  await client.updateEntity({ ...current, name: input.name.trim(), description: input.description.trim(), participantIds: JSON.stringify([...new Set(input.participantIds)]), ...(blobName ? { blobName } : {}), active: input.active }, "Merge");
+  await client.updateEntity({ ...current, name: input.name.trim(), description: input.description.trim(), participantIds: JSON.stringify([...new Set(input.participantIds)]), ...(blobName ? { blobName } : {}), active: input.active, updatedAt: new Date().toISOString() }, "Merge");
 }
 
 export async function deleteTapa(id: string) {

@@ -7,6 +7,7 @@ import {
   BsChevronDown,
   BsHourglassSplit,
   BsPeopleFill,
+  BsPencilSquare,
   BsStarFill,
   BsTrophyFill,
   BsX,
@@ -30,6 +31,7 @@ export function TapasContest({
   itemLabel = "tapa",
   createHref,
   activeUserId,
+  editBaseHref,
 }: {
   tapas: RankedTapa[];
   state: ContestState;
@@ -39,6 +41,7 @@ export function TapasContest({
   itemLabel?: string;
   createHref?: string;
   activeUserId?: string;
+  editBaseHref?: string;
 }) {
   const [selected, setSelected] = useState<RankedTapa | null>(null);
   const votableItems = activeUserId
@@ -231,6 +234,12 @@ export function TapasContest({
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">Descripción</h3>
                 <p className="mt-2 whitespace-pre-line text-base leading-7 text-slate-700">{selected.description}</p>
               </div>
+
+              {state === "catalog" && editBaseHref && activeUserId && selected.participantIds.includes(activeUserId) && (
+                <a href={`${editBaseHref}/${selected.id}/editar`} className="mt-6 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--primary)] px-5 font-black text-white">
+                  <BsPencilSquare /> Editar {itemLabel === "tapa" ? "mi tapa" : "mi actuación"}
+                </a>
+              )}
 
               {state === "ranking" && (
                 <div className="mt-6 border-t border-slate-200 pt-6">
