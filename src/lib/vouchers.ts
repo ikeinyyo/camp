@@ -8,6 +8,9 @@ import { getUserById } from "./users";
 
 const VOUCHER_PARTITION = "voucher";
 const CLAIM_PARTITION = "claim";
+const PROPOSAL_PARTITION = "proposal";
+const CONFIG_PARTITION = "config";
+const CONFIG_ROW = "voucher-state";
 const MIGRATION_PARTITION = "migration";
 const EXTRA_VOUCHERS_MIGRATION = "extra-vouchers-2026-08";
 
@@ -31,6 +34,17 @@ export type VoucherClaim = {
   status: "pending" | "redeemed";
 };
 
+export type VoucherState = "proposals" | "normal";
+
+export type VoucherProposal = {
+  id: string;
+  text: string;
+  userId: string;
+  username: string;
+  displayName: string;
+  createdAt: string;
+};
+
 type VoucherEntity = TableEntity<{
   title: string;
   description: string;
@@ -51,6 +65,16 @@ type ClaimEntity = TableEntity<{
   createdAt: string;
   redeemedAt?: string;
 }>;
+
+type ProposalEntity = TableEntity<{
+  text: string;
+  userId: string;
+  username: string;
+  displayName: string;
+  createdAt: string;
+}>;
+
+type ConfigEntity = TableEntity<{ state: VoucherState }>;
 
 let tableReady: Promise<TableClient> | undefined;
 
@@ -121,6 +145,10 @@ function toVoucher(entity: VoucherEntity): Voucher {
 
 function toClaim(entity: ClaimEntity): VoucherClaim {
   return { id: entity.rowKey, voucherId: entity.voucherId, voucherTitle: entity.voucherTitle, userId: entity.userId, username: entity.username, displayName: entity.displayName, points: entity.points, status: entity.status };
+}
+
+function toProposal(entity: ProposalEntity): VoucherProposal {
+  return { id: entity.rowKey, text: entity.text, userId: entity.userId, username: entity.username, displayName: entity.displayName, createdAt: entity.createdAt };
 }
 
 function validateVoucher(input: { title: string; description: string; points: number }) {
@@ -237,7 +265,47 @@ export async function deleteVoucher(id: string) {
   await (await getTableClient()).deleteEntity(VOUCHER_PARTITION, id);
 }
 
+export async function getVoucherState(): Promise<VoucherState> {
+  try {
+    return (await (await getTableClient()).getEntity<ConfigEntity>(CONFIG_PARTITION, CONFIG_ROW)).state;
+  } catch (error) {
+    if (typeof error === "object" && error && "statusCode" in error && error.statusCode === 404) {
+      await setVoucherState("normal");
+      return "normal";
+    }
+    throw error;
+  }
+}
+
+export async function setVoucherState(state: VoucherState) {
+  await (await getTableClient()).upsertEntity<ConfigEntity>({ partitionKey: CONFIG_PARTITION, rowKey: CONFIG_ROW, state }, "Merge");
+}
+
+export async function createVoucherProposal(text: string, userId: string) {
+  const value = text.trim();
+  if (value.length < 10 || value.length > 500) throw new Error("La propuesta debe tener entre 10 y 500 caracteres.");
+  if (await getVoucherState() !== "proposals") throw new Error("Las propuestas no están abiertas.");
+  const user = await getUserById(userId);
+  if (!user) throw new Error("El usuario no está disponible.");
+  const entity: ProposalEntity = { partitionKey: PROPOSAL_PARTITION, rowKey: randomUUID(), text: value, userId: user.id, username: user.username, displayName: user.displayName, createdAt: new Date().toISOString() };
+  await (await getTableClient()).createEntity(entity);
+  return toProposal(entity);
+}
+
+export async function listVoucherProposals() {
+  const entities = (await getTableClient()).listEntities<ProposalEntity>({ queryOptions: { filter: `PartitionKey eq '${PROPOSAL_PARTITION}'` } });
+  const proposals: VoucherProposal[] = [];
+  for await (const entity of entities) proposals.push(toProposal(entity));
+  return proposals.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+}
+
+export async function deleteVoucherProposal(id: string) {
+  if (!id) throw new Error("Falta la propuesta.");
+  await (await getTableClient()).deleteEntity(PROPOSAL_PARTITION, id);
+}
+
 export async function createVoucherClaim(voucherId: string, userId: string) {
+  if (await getVoucherState() !== "normal") throw new Error("El catálogo de vales todavía no está disponible.");
   const [voucher, user] = await Promise.all([getVoucher(voucherId), getUserById(userId)]);
   if (!voucher?.active || !user) throw new Error("El vale o el usuario no están disponibles.");
   const entity: ClaimEntity = { partitionKey: CLAIM_PARTITION, rowKey: randomUUID(), voucherId: voucher.id, voucherTitle: voucher.title, userId: user.id, username: user.username, displayName: user.displayName, points: voucher.points, status: "pending", createdAt: new Date().toISOString() };

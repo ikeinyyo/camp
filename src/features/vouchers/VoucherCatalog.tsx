@@ -7,7 +7,7 @@ import type { Voucher, VoucherClaim } from "@/lib/vouchers";
 
 type ClaimResponse = { claim: VoucherClaim; qrCode: string; payload: string };
 
-export function VoucherCatalog({ vouchers, displayName }: { vouchers: Voucher[]; displayName: string }) {
+export function VoucherCatalog({ vouchers, displayName, previewOnly = false }: { vouchers: Voucher[]; displayName: string; previewOnly?: boolean }) {
   const requestIdRef = useRef(0);
   const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
   const [claim, setClaim] = useState<ClaimResponse | null>(null);
@@ -30,6 +30,11 @@ export function VoucherCatalog({ vouchers, displayName }: { vouchers: Voucher[];
     const requestId = ++requestIdRef.current;
     setSelectedVoucher(voucher);
     setClaim(null);
+    if (previewOnly) {
+      setLoading(false);
+      setError("");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -76,7 +81,9 @@ export function VoucherCatalog({ vouchers, displayName }: { vouchers: Voucher[];
             <p className="mt-4 leading-7 text-slate-600">{selectedVoucher.description}</p>
             <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--accent-subtle)] px-4 py-2 font-black text-[var(--accent-hover)]"><BsCheck2Circle aria-hidden="true" /> {selectedVoucher.points} puntos al validarlo</div>
 
-            {!claim ? (
+            {previewOnly ? (
+              <div className="mt-7 rounded-2xl bg-[var(--primary-subtle)] p-5 text-center font-bold text-[var(--primary-dark)]">Este vale estará disponible cuando empiece la Gallardo Camp.</div>
+            ) : !claim ? (
               <div className="mt-7 rounded-2xl bg-slate-50 p-8 text-center font-bold text-slate-600">{loading ? "Generando QR…" : "No se pudo generar el QR."}</div>
             ) : (
               <div className="mt-7 text-center">
