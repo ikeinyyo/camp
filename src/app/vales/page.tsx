@@ -40,11 +40,11 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
             </form>
           </section>
           <section>
-            <div className="mb-6 text-center"><h2 className="text-2xl font-black">Vales que ya tenemos</h2><p className="mt-2 text-slate-600">Consulta las tareas actuales para proponer algo diferente. Los QR estarán disponibles cuando empiece la Gallardo Camp.</p></div>
-            <VoucherCatalog vouchers={vouchers} displayName={user.displayName} previewOnly />
+            <div className="mb-6 text-center"><h2 className="text-2xl font-black">Vales que ya tenemos</h2><p className="mt-2 text-slate-600">Consulta las tareas actuales para proponer algo diferente. Ya puedes reservar los que tengan plazas limitadas; los QR estarán disponibles cuando empiece la Gallardo Camp.</p></div>
+            <VoucherCatalog vouchers={vouchers} activeUser={user} previewOnly />
           </section>
           </div>
-        ) : <VoucherCatalog vouchers={vouchers} displayName={user.displayName} />}
+        ) : <VoucherCatalog vouchers={vouchers} activeUser={user} />}
       </section>
     </main>
   );

@@ -11,6 +11,9 @@ vi.mock("@/lib/activities", () => ({
     { id: "friday", date: "Viernes 28", shortDate: "Vie 28", events: [] },
   ],
 }));
+vi.mock("@/lib/users", () => ({
+  getUserById: async () => null,
+}));
 vi.mock("next/headers", () => ({
   cookies: async () => ({ get: () => undefined }),
 }));

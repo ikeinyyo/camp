@@ -164,11 +164,13 @@ export function ScheduleEventDialog({
   event,
   onClose,
   canRequestPoints,
+  activeUserName,
   returnHref = "/agenda",
 }: {
   event: ScheduleEvent;
   onClose: () => void;
   canRequestPoints: boolean;
+  activeUserName?: string;
   returnHref?: string;
 }) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -287,16 +289,14 @@ export function ScheduleEventDialog({
           </div>
         </dl>
         {canRequestPoints && event.participationPoints > 0 && (
-          <a href={`/actividades/${event.id}/vale?volver=${encodeURIComponent(returnHref)}`} className="mt-6 block rounded-xl bg-[var(--primary)] px-5 py-3 text-center font-bold text-white hover:bg-[var(--primary-dark)]">
-            Generar QR de participación
-          </a>
+          <div className="mt-6"><p className="mb-2 text-center text-sm font-semibold text-slate-600">El QR se generará para <strong className="text-[var(--primary-dark)]">{activeUserName}</strong></p><a href={`/actividades/${event.id}/vale?volver=${encodeURIComponent(returnHref)}`} className="block rounded-xl bg-[var(--primary)] px-5 py-3 text-center font-bold text-white hover:bg-[var(--primary-dark)]">Generar QR para {activeUserName}</a></div>
         )}
       </article>
     </div>
   );
 }
 
-export function Schedule({ schedule, canRequestPoints = false }: { schedule: ScheduleDay[]; canRequestPoints?: boolean }) {
+export function Schedule({ schedule, canRequestPoints = false, activeUserName }: { schedule: ScheduleDay[]; canRequestPoints?: boolean; activeUserName?: string }) {
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
 
@@ -356,7 +356,7 @@ export function Schedule({ schedule, canRequestPoints = false }: { schedule: Sch
       </div>
 
       {selectedEvent && (
-        <ScheduleEventDialog event={selectedEvent} onClose={() => setSelectedEvent(null)} canRequestPoints={canRequestPoints} />
+        <ScheduleEventDialog event={selectedEvent} onClose={() => setSelectedEvent(null)} canRequestPoints={canRequestPoints} activeUserName={activeUserName} />
       )}
     </section>
   );
