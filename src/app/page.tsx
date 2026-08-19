@@ -5,6 +5,7 @@ import { getSafeSectionAuthentication, isSectionEnabled } from "@/lib/sections";
 import { getSchedule } from "@/lib/activities";
 import { cookies } from "next/headers";
 import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
+import { getUserById } from "@/lib/users";
 
 export default async function Home() {
   const [agendaAvailable, mapAvailable, sectionAuthentication, cookieStore] = await Promise.all([
@@ -13,7 +14,9 @@ export default async function Home() {
     getSafeSectionAuthentication(),
     cookies(),
   ]);
-  const hasSession = Boolean(readUserSessionToken(cookieStore.get(USER_COOKIE_NAME)?.value));
+  const session = readUserSessionToken(cookieStore.get(USER_COOKIE_NAME)?.value);
+  const activeUser = session ? await getUserById(session.activeUserId) : null;
+  const hasSession = Boolean(activeUser);
   const agendaEnabled = agendaAvailable && (!sectionAuthentication.agenda || hasSession);
   const mapEnabled = mapAvailable && (!sectionAuthentication.map || hasSession);
   const schedule = agendaEnabled ? await getSchedule() : [];
@@ -73,7 +76,7 @@ export default async function Home() {
 
       {agendaEnabled && (
         <section className="pt-20">
-          <Schedule schedule={schedule} canRequestPoints={hasSession} />
+          <Schedule schedule={schedule} canRequestPoints={hasSession} activeUserName={activeUser?.displayName} />
         </section>
       )}
     </main>

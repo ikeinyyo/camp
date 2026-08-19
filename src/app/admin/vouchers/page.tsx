@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminNavigation } from "@/features/admin/AdminNavigation";
+import { AdminVoucherLists } from "@/features/admin/AdminVoucherLists";
+import { VOUCHER_CATEGORIES } from "@/config/vouchers";
 import { getVoucherState, listVoucherProposals, listVouchers } from "@/lib/vouchers";
+import { listUsers } from "@/lib/users";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Vales | Administración" };
@@ -10,10 +13,11 @@ type Props = { searchParams: Promise<{ saved?: string; error?: string }> };
 
 export default async function AdminVouchersPage({ searchParams }: Props) {
   const { saved, error } = await searchParams;
-  const [vouchers, proposals, state] = await Promise.all([
+  const [vouchers, proposals, state, users] = await Promise.all([
     listVouchers({ includeInactive: true }),
     listVoucherProposals(),
     getVoucherState(),
+    listUsers(),
   ]);
   const inputClass = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)]";
 
@@ -51,23 +55,19 @@ export default async function AdminVouchersPage({ searchParams }: Props) {
               </div>
             )}
           </section>
-          <section className="min-w-0">
-            <h2 className="text-2xl font-black">Catálogo de vales</h2>
-            <form action="/admin/vouchers/create" method="post" className="mt-5 grid gap-4 rounded-2xl border border-[var(--primary-border)] bg-[var(--primary-subtle)] p-5 lg:grid-cols-[90px_1fr_2fr_110px_auto] lg:items-end">
-              <label className="grid gap-2 text-sm font-bold">Orden<input name="sortOrder" type="number" min={1} defaultValue={1000} required className={inputClass} /></label>
+          <section className="min-w-0 rounded-2xl border border-[var(--primary-border)] bg-[var(--primary-subtle)] p-5">
+            <h2 className="text-xl font-black">Crear un vale</h2>
+            <form action="/admin/vouchers/create" method="post" className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.5fr_160px_100px_120px_auto] lg:items-end">
+              <input type="hidden" name="sortOrder" value={1000} />
               <label className="grid gap-2 text-sm font-bold">Título<input name="title" required minLength={3} maxLength={80} className={inputClass} /></label>
               <label className="grid gap-2 text-sm font-bold">Descripción<input name="description" required minLength={5} maxLength={500} className={inputClass} /></label>
+              <label className="grid gap-2 text-sm font-bold">Categoría<select name="category" required className={inputClass}>{VOUCHER_CATEGORIES.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
               <label className="grid gap-2 text-sm font-bold">Puntos<input name="points" type="number" min={1} max={5} defaultValue={5} required className={inputClass} /></label>
+              <label className="grid gap-2 text-sm font-bold">Máx. plazas<input name="maxReservations" type="number" min={1} placeholder="Ilimitadas" className={inputClass} /></label>
               <button type="submit" className="rounded-xl bg-[var(--primary)] px-5 py-2.5 text-sm font-bold text-white">+ Crear vale</button>
             </form>
-
-            <p className="mt-5 text-xs font-semibold text-slate-500 sm:hidden">Desliza horizontalmente para editar todos los campos →</p>
-            <div className="-mx-4 mt-2 overflow-x-auto border-y border-slate-200 bg-white shadow-sm sm:mx-0 sm:mt-5 sm:rounded-2xl sm:border">
-              <table className="w-full min-w-[980px] text-left"><thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-4 py-3">Orden</th><th className="px-4 py-3">Título</th><th className="px-4 py-3">Descripción</th><th className="px-4 py-3">Puntos</th><th className="px-4 py-3">Estado</th><th className="px-4 py-3 text-right">Acciones</th></tr></thead>
-                <tbody className="divide-y divide-slate-200">{vouchers.map((voucher) => { const formId = `voucher-${voucher.id}`; return <tr key={voucher.id} className="align-top"><td className="w-24 p-4"><form id={formId} action={`/admin/vouchers/${voucher.id}`} method="post" /><input form={formId} name="sortOrder" type="number" min={1} defaultValue={voucher.sortOrder} required className={inputClass} /></td><td className="p-4"><input form={formId} name="title" defaultValue={voucher.title} required minLength={3} maxLength={80} className={inputClass} /></td><td className="p-4"><textarea form={formId} name="description" defaultValue={voucher.description} required minLength={5} maxLength={500} rows={2} className={inputClass} /></td><td className="p-4"><input form={formId} name="points" type="number" min={1} max={5} defaultValue={voucher.points} required className={inputClass} /></td><td className="p-4"><select form={formId} name="active" defaultValue={String(voucher.active)} className={inputClass}><option value="true">Activo</option><option value="false">Inactivo</option></select></td><td className="p-4"><div className="flex justify-end gap-2"><button form={formId} className="rounded-lg border border-[var(--primary)] px-3 py-2 text-sm font-bold text-[var(--primary)]">Guardar</button><form action={`/admin/vouchers/${voucher.id}/delete`} method="post"><button className="rounded-lg border border-red-200 px-3 py-2 text-sm font-bold text-red-700 hover:bg-red-50">Borrar</button></form></div></td></tr>; })}</tbody>
-              </table>
-            </div>
           </section>
+          <AdminVoucherLists initialVouchers={vouchers} users={users} />
         </div>
       </div>
     </main>

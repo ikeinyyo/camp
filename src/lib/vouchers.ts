@@ -3,6 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { TableClient, type TableEntity } from "@azure/data-tables";
 import { STORAGE_SETTINGS } from "@/config/storage";
+import { VOUCHER_CATEGORIES, type VoucherCategory } from "@/config/vouchers";
 import { addPointMovement } from "./points";
 import { getUserById } from "./users";
 
@@ -21,7 +22,12 @@ export type Voucher = {
   points: number;
   active: boolean;
   sortOrder: number;
+  category: VoucherCategory;
+  maxReservations: number | null;
+  reservedUserIds: string[];
 };
+
+export type { VoucherCategory } from "@/config/vouchers";
 
 export type VoucherClaim = {
   id: string;
@@ -52,6 +58,9 @@ type VoucherEntity = TableEntity<{
   active: boolean;
   createdAt: string;
   sortOrder?: number;
+  category?: VoucherCategory;
+  maxReservations?: number;
+  reservedUserIds?: string;
 }>;
 
 type ClaimEntity = TableEntity<{
@@ -122,6 +131,26 @@ function getDefaultSortOrder(title: string) {
   return index === -1 ? 1000 : index + 1;
 }
 
+function getDefaultCategory(title: string): VoucherCategory {
+  if (["Ayudar a cocinar", "Dar de comer a Alberto", "Entretener a los niños durante una tarea", "Dormir a Alberto"].includes(title)) return "collaboration";
+  if (["Encargarse de la música durante una actividad"].includes(title)) return "activities";
+  return "organization";
+}
+
+function isVoucherCategory(value: unknown): value is VoucherCategory {
+  return VOUCHER_CATEGORIES.some((category) => category.id === value);
+}
+
+function parseUserIds(value?: string) {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? [...new Set(parsed.filter((id): id is string => typeof id === "string" && id.length > 0))] : [];
+  } catch {
+    return [];
+  }
+}
+
 async function getTableClient() {
   if (!tableReady) {
     tableReady = (async () => {
@@ -140,7 +169,7 @@ async function getTableClient() {
 }
 
 function toVoucher(entity: VoucherEntity): Voucher {
-  return { id: entity.rowKey, title: entity.title, description: entity.description, points: entity.points, active: entity.active, sortOrder: entity.sortOrder ?? getDefaultSortOrder(entity.title) };
+  return { id: entity.rowKey, title: entity.title, description: entity.description, points: entity.points, active: entity.active, sortOrder: entity.sortOrder ?? getDefaultSortOrder(entity.title), category: isVoucherCategory(entity.category) ? entity.category : getDefaultCategory(entity.title), maxReservations: Number.isInteger(entity.maxReservations) && Number(entity.maxReservations) > 0 ? Number(entity.maxReservations) : null, reservedUserIds: parseUserIds(entity.reservedUserIds) };
 }
 
 function toClaim(entity: ClaimEntity): VoucherClaim {
@@ -183,6 +212,7 @@ async function ensureExtraVouchers(client: TableClient) {
         active: true,
         createdAt: new Date().toISOString(),
         sortOrder: getDefaultSortOrder(voucher.title),
+        category: getDefaultCategory(voucher.title),
       };
       try {
         await client.createEntity(entity);
@@ -215,8 +245,9 @@ export async function listVouchers(options?: { includeInactive?: boolean }) {
   for await (const entity of entities) {
     storedVoucherCount += 1;
     const expectedSortOrder = entity.sortOrder ?? getDefaultSortOrder(entity.title);
-    if (entity.sortOrder === undefined) {
+    if (entity.sortOrder === undefined || !isVoucherCategory(entity.category)) {
       entity.sortOrder = expectedSortOrder;
+      entity.category = isVoucherCategory(entity.category) ? entity.category : getDefaultCategory(entity.title);
       await client.updateEntity(entity, "Merge");
     }
     const voucher = toVoucher(entity);
@@ -244,21 +275,65 @@ export async function getVoucher(id: string) {
   }
 }
 
-export async function createVoucher(input: { title: string; description: string; points: number; active?: boolean; sortOrder?: number }) {
+export async function createVoucher(input: { title: string; description: string; points: number; active?: boolean; sortOrder?: number; category?: VoucherCategory; maxReservations?: number | null }) {
   validateVoucher(input);
-  const entity: VoucherEntity = { partitionKey: VOUCHER_PARTITION, rowKey: randomUUID(), title: input.title.trim(), description: input.description.trim(), points: input.points, active: input.active ?? true, createdAt: new Date().toISOString(), sortOrder: input.sortOrder ?? getDefaultSortOrder(input.title.trim()) };
+  const category = input.category ?? getDefaultCategory(input.title.trim());
+  if (!isVoucherCategory(category)) throw new Error("Categoría no válida.");
+  if (input.maxReservations !== null && input.maxReservations !== undefined && (!Number.isInteger(input.maxReservations) || input.maxReservations < 1)) throw new Error("El máximo de plazas no es válido.");
+  const entity: VoucherEntity = { partitionKey: VOUCHER_PARTITION, rowKey: randomUUID(), title: input.title.trim(), description: input.description.trim(), points: input.points, active: input.active ?? true, createdAt: new Date().toISOString(), sortOrder: input.sortOrder ?? getDefaultSortOrder(input.title.trim()), category, maxReservations: input.maxReservations ?? 0, reservedUserIds: "[]" };
   await (await getTableClient()).createEntity(entity);
   return toVoucher(entity);
 }
 
-export async function updateVoucher(id: string, input: { title: string; description: string; points: number; active: boolean; sortOrder: number }) {
+export async function updateVoucher(id: string, input: { title: string; description: string; points: number; active: boolean; sortOrder: number; category: VoucherCategory; maxReservations: number | null; reservedUserIds: string[] }) {
   validateVoucher(input);
   const client = await getTableClient();
   const current = await client.getEntity<VoucherEntity>(VOUCHER_PARTITION, id);
   if (!Number.isInteger(input.sortOrder) || input.sortOrder < 1) throw new Error("Orden no válido.");
-  const entity = { ...current, title: input.title.trim(), description: input.description.trim(), points: input.points, active: input.active, sortOrder: input.sortOrder };
+  if (!isVoucherCategory(input.category)) throw new Error("Categoría no válida.");
+  if (input.maxReservations !== null && (!Number.isInteger(input.maxReservations) || input.maxReservations < 1)) throw new Error("El máximo de plazas no es válido.");
+  const reservedUserIds = [...new Set(input.reservedUserIds.filter(Boolean))];
+  if (input.maxReservations !== null && reservedUserIds.length > input.maxReservations) throw new Error("Hay más personas seleccionadas que plazas disponibles.");
+  const entity = { ...current, title: input.title.trim(), description: input.description.trim(), points: input.points, active: input.active, sortOrder: input.sortOrder, category: input.category, maxReservations: input.maxReservations ?? 0, reservedUserIds: JSON.stringify(input.maxReservations === null ? [] : reservedUserIds) };
   await client.updateEntity(entity, "Merge");
   return toVoucher(entity);
+}
+
+export class VoucherFullError extends Error {}
+export class VoucherAlreadyReservedError extends Error {}
+
+export async function reserveVoucher(voucherId: string, userId: string) {
+  if (!(await getUserById(userId))) throw new Error("El usuario no está disponible.");
+  const client = await getTableClient();
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const entity = await client.getEntity<VoucherEntity>(VOUCHER_PARTITION, voucherId);
+    const voucher = toVoucher(entity);
+    if (!voucher.active || voucher.maxReservations === null) throw new Error("Este vale no admite reservas.");
+    if (voucher.reservedUserIds.includes(userId)) throw new VoucherAlreadyReservedError("Ya tienes una plaza reservada.");
+    if (voucher.reservedUserIds.length >= voucher.maxReservations) throw new VoucherFullError("No quedan plazas disponibles.");
+    const reservedUserIds = [...voucher.reservedUserIds, userId];
+    try {
+      await client.updateEntity({ ...entity, reservedUserIds: JSON.stringify(reservedUserIds) }, "Replace");
+      return { ...voucher, reservedUserIds };
+    } catch (error) {
+      if (attempt === 3 || typeof error !== "object" || error === null || !("statusCode" in error) || error.statusCode !== 412) throw error;
+    }
+  }
+  throw new Error("No se pudo reservar la plaza.");
+}
+
+export async function reorderVouchers(items: Array<{ id: string; category: VoucherCategory }>) {
+  const ids = new Set<string>();
+  const categoryPositions = new Map<VoucherCategory, number>();
+  const client = await getTableClient();
+  for (const item of items) {
+    if (!item.id || ids.has(item.id) || !isVoucherCategory(item.category)) throw new Error("Orden no válido.");
+    ids.add(item.id);
+    const sortOrder = (categoryPositions.get(item.category) ?? 0) + 1;
+    categoryPositions.set(item.category, sortOrder);
+    const current = await client.getEntity<VoucherEntity>(VOUCHER_PARTITION, item.id);
+    await client.updateEntity({ ...current, category: item.category, sortOrder }, "Merge");
+  }
 }
 
 export async function deleteVoucher(id: string) {
@@ -308,6 +383,7 @@ export async function createVoucherClaim(voucherId: string, userId: string) {
   if (await getVoucherState() !== "normal") throw new Error("El catálogo de vales todavía no está disponible.");
   const [voucher, user] = await Promise.all([getVoucher(voucherId), getUserById(userId)]);
   if (!voucher?.active || !user) throw new Error("El vale o el usuario no están disponibles.");
+  if (voucher.maxReservations !== null && !voucher.reservedUserIds.includes(userId)) throw new Error("Este vale está reservado para las personas apuntadas.");
   const entity: ClaimEntity = { partitionKey: CLAIM_PARTITION, rowKey: randomUUID(), voucherId: voucher.id, voucherTitle: voucher.title, userId: user.id, username: user.username, displayName: user.displayName, points: voucher.points, status: "pending", createdAt: new Date().toISOString() };
   await (await getTableClient()).createEntity(entity);
   return toClaim(entity);
@@ -317,6 +393,8 @@ export async function redeemVoucherClaim(claimId: string) {
   const client = await getTableClient();
   const entity = await client.getEntity<ClaimEntity>(CLAIM_PARTITION, claimId);
   if (entity.status === "redeemed") return { claim: toClaim(entity), alreadyRedeemed: true };
+  const voucher = await getVoucher(entity.voucherId);
+  if (!voucher?.active || (voucher.maxReservations !== null && !voucher.reservedUserIds.includes(entity.userId))) throw new Error("El usuario ya no tiene una plaza reservada para este vale.");
   entity.status = "redeemed";
   entity.redeemedAt = new Date().toISOString();
   await client.updateEntity(entity, "Merge");
@@ -334,6 +412,7 @@ export async function redeemVoucherClaim(claimId: string) {
 export async function applyVoucherManually(voucherId: string, userId: string) {
   const [voucher, user] = await Promise.all([getVoucher(voucherId), getUserById(userId)]);
   if (!voucher?.active || !user) throw new Error("El vale o el usuario no están disponibles.");
+  if (voucher.maxReservations !== null && !voucher.reservedUserIds.includes(userId)) throw new Error("El usuario no tiene una plaza reservada para este vale.");
   await addPointMovement({ userId, points: voucher.points, source: "voucher", sourceId: voucher.id, concept: voucher.title, detail: "Vale asignado manualmente", method: "manual" });
   return { voucher, user };
 }
