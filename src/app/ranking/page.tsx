@@ -6,6 +6,8 @@ import { rankUsers } from "@/lib/ranking";
 import { isSectionEnabled } from "@/lib/sections";
 import { listUsers } from "@/lib/users";
 import { UserAvatar } from "@/features/users/UserAvatar";
+import { FinalScoreCarousel } from "@/features/ranking/FinalScoreCarousel";
+import { getRankingMode } from "@/lib/ranking-mode";
 
 export const metadata: Metadata = {
   title: "Ranking | Gallardo Camp 2026",
@@ -20,12 +22,14 @@ const podiumStyles: Record<number, string> = {
 };
 
 export default async function RankingPage() {
-  const [rankingEnabled, allUsers] = await Promise.all([
+  const [rankingEnabled, allUsers, mode] = await Promise.all([
     isSectionEnabled("ranking"),
     listUsers(),
+    getRankingMode(),
   ]);
   if (!rankingEnabled) redirect("/");
   const users = rankUsers(allUsers);
+  if (mode === "final") return <FinalScoreCarousel users={users} />;
 
   return (
     <main className="min-h-screen px-4 py-12 sm:px-6">

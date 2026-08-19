@@ -21,7 +21,7 @@ export function ValidationShortcut() {
       <nav aria-label="Navegación móvil de administración" className="fixed inset-x-0 bottom-0 z-[90] h-[calc(3.75rem+env(safe-area-inset-bottom))] border-t border-slate-200 bg-white shadow-[0_-6px_18px_rgb(15_23_42/0.12)] md:hidden">
         <ul className="flex h-[60px] w-full flex-row items-stretch">
           {items.map((item) => {
-            const active = item.href === "/admin" ? pathname === item.href || ["/admin/users", "/admin/sections", "/admin/vouchers", "/admin/activities"].some((path) => pathname.startsWith(path)) : pathname.startsWith(item.href);
+            const active = item.href === "/admin" ? pathname === item.href || ["/admin/users", "/admin/sections", "/admin/vouchers", "/admin/activities", "/admin/ranking"].some((path) => pathname.startsWith(path)) : pathname.startsWith(item.href);
             const Icon = item.icon;
             const primary = "primary" in item && item.primary;
             return (
