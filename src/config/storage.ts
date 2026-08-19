@@ -8,6 +8,7 @@ export const STORAGE_SETTINGS = {
     tapas: "Tapas",
     talents: "Talents",
     ranking: "Ranking",
+    games: "Games",
   },
   containers: {
     userAvatars: "user-avatars",

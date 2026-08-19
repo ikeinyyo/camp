@@ -6,7 +6,7 @@ import { isSectionEnabled } from "@/lib/sections";
 import { getUsersByIds, listUsers } from "@/lib/users";
 import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
 import { listUserPointMovements } from "@/lib/points";
-import { BsCalendarEvent, BsTicketPerforated } from "react-icons/bs";
+import { BsCalendarEvent, BsController, BsTicketPerforated } from "react-icons/bs";
 import { ProfileEditDialog } from "@/features/users/ProfileEditDialog";
 import { UserAvatar } from "@/features/users/UserAvatar";
 
@@ -75,9 +75,9 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
             {movements.map((movement) => (
               <li key={movement.id} className="flex items-center gap-4 py-4">
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--primary-subtle)] text-xl text-[var(--primary)]">
-                  {movement.source === "voucher" ? <BsTicketPerforated aria-hidden="true" /> : <BsCalendarEvent aria-hidden="true" />}
+                  {movement.source === "voucher" ? <BsTicketPerforated aria-hidden="true" /> : movement.source === "game" ? <BsController aria-hidden="true" /> : <BsCalendarEvent aria-hidden="true" />}
                 </span>
-                <span className="min-w-0 flex-1"><span className="block truncate font-bold">{movement.concept}</span><span className="block text-sm text-slate-500">{movement.detail} · {movement.method === "qr" ? "QR" : "Asignación manual"}</span></span>
+                <span className="min-w-0 flex-1"><span className="block truncate font-bold">{movement.concept}</span><span className="block text-sm text-slate-500">{movement.detail} · {movement.method === "qr" ? "QR" : movement.method === "game" ? "Minijuego" : "Asignación manual"}</span></span>
                 <span className="shrink-0 text-lg font-black text-[var(--accent)]">+{movement.points}</span>
               </li>
             ))}

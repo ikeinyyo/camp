@@ -35,6 +35,9 @@ export function NavBar({
     ...(activeUser && enabledSections.vouchers
       ? [{ label: "Vales", href: "/vales", section: "vouchers" as const }]
       : []),
+    ...(activeUser && enabledSections.games
+      ? [{ label: "Juegos", href: "/juegos", section: "games" as const }]
+      : []),
     ...(enabledSections.tapas
       ? [{ label: "Tapas", href: "/tapas", section: "tapas" as const }]
       : []),

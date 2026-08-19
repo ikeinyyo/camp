@@ -5,8 +5,8 @@ import { TableClient, type TableEntity } from "@azure/data-tables";
 import { STORAGE_SETTINGS } from "@/config/storage";
 import { awardUserPoints } from "./users";
 
-export type PointSource = "voucher" | "activity";
-export type PointMethod = "qr" | "manual";
+export type PointSource = "voucher" | "activity" | "game";
+export type PointMethod = "qr" | "manual" | "game";
 
 export type PointMovement = {
   id: string;
@@ -90,4 +90,16 @@ export async function listUserPointMovements(userId: string) {
     movements.push({ id: entity.rowKey, userId: entity.userId, points: entity.points, source: entity.source, sourceId: entity.sourceId, concept: entity.concept, detail: entity.detail, method: entity.method, createdAt: entity.createdAt });
   }
   return movements.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+}
+
+export async function deletePointMovement(userId: string, movementId: string) {
+  const client = await getTableClient();
+  const entity = await client.getEntity<PointEntity>(userId, movementId);
+  await client.deleteEntity(userId, movementId);
+  try {
+    await awardUserPoints(userId, -entity.points);
+  } catch (error) {
+    await client.createEntity(entity).catch(() => undefined);
+    throw error;
+  }
 }
