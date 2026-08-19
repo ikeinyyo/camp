@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { BsCalendarEvent, BsTicketPerforated } from "react-icons/bs";
+import { BsCalendarEvent, BsController, BsTicketPerforated } from "react-icons/bs";
 import { UserAvatar } from "@/features/users/UserAvatar";
 import { listUserPointMovements } from "@/lib/points";
 import { rankUsers } from "@/lib/ranking";
@@ -46,7 +46,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
       <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <h2 className="text-2xl font-black">Desglose de puntos</h2>
         <p className="mt-1 text-sm text-slate-600">Recompensas conseguidas durante el evento.</p>
-        {movements.length === 0 ? <p className="mt-6 rounded-2xl bg-slate-50 p-5 text-center text-sm text-slate-500">Todavía no hay movimientos registrados.</p> : <ul className="mt-6 divide-y divide-slate-200">{movements.map((movement) => <li key={movement.id} className="flex items-center gap-4 py-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--primary-subtle)] text-xl text-[var(--primary)]">{movement.source === "voucher" ? <BsTicketPerforated /> : <BsCalendarEvent />}</span><span className="min-w-0 flex-1"><span className="block truncate font-bold">{movement.concept}</span><span className="block text-sm text-slate-500">{movement.detail}</span></span><span className="shrink-0 text-lg font-black text-[var(--accent)]">+{movement.points}</span></li>)}</ul>}
+        {movements.length === 0 ? <p className="mt-6 rounded-2xl bg-slate-50 p-5 text-center text-sm text-slate-500">Todavía no hay movimientos registrados.</p> : <ul className="mt-6 divide-y divide-slate-200">{movements.map((movement) => <li key={movement.id} className="flex items-center gap-4 py-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--primary-subtle)] text-xl text-[var(--primary)]">{movement.source === "voucher" ? <BsTicketPerforated /> : movement.source === "game" ? <BsController /> : <BsCalendarEvent />}</span><span className="min-w-0 flex-1"><span className="block truncate font-bold">{movement.concept}</span><span className="block text-sm text-slate-500">{movement.detail}</span></span><span className="shrink-0 text-lg font-black text-[var(--accent)]">+{movement.points}</span></li>)}</ul>}
       </section>
     </section>
   </main>;

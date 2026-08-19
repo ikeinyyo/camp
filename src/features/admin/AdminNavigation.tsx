@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export function AdminNavigation({ active }: { active: "users" | "sections" | "vouchers" | "activities" | "validation" | "tapas" | "talents" | "ranking" }) {
+export function AdminNavigation({ active }: { active: "users" | "sections" | "vouchers" | "activities" | "validation" | "tapas" | "talents" | "ranking" | "games" }) {
   const items = [
     { id: "users", label: "Usuarios", href: "/admin" },
     { id: "sections", label: "Secciones", href: "/admin/sections" },
@@ -9,6 +9,7 @@ export function AdminNavigation({ active }: { active: "users" | "sections" | "vo
     { id: "tapas", label: "Tapas", href: "/admin/tapas" },
     { id: "talents", label: "Talentos", href: "/admin/talentos" },
     { id: "ranking", label: "Ranking", href: "/admin/ranking" },
+    { id: "games", label: "Juegos", href: "/admin/games" },
     { id: "validation", label: "Validación", href: "/admin/validation" },
   ] as const;
 

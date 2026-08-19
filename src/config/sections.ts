@@ -24,6 +24,14 @@ export const SECTION_DEFINITIONS = [
     defaultRequiresAuth: true,
   },
   {
+    id: "games",
+    name: "Minijuegos",
+    description: "Trivia, palabra y frase diaria para ganar puntos antes del evento.",
+    paths: ["/juegos"],
+    defaultEnabled: true,
+    defaultRequiresAuth: true,
+  },
+  {
     id: "vouchers",
     name: "Vales",
     description: "Catálogo de tareas con recompensa y solicitud mediante QR.",
