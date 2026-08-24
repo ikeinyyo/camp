@@ -14,6 +14,7 @@ const CONFIG_PARTITION = "config";
 const CONFIG_ROW = "voucher-state";
 const MIGRATION_PARTITION = "migration";
 const EXTRA_VOUCHERS_MIGRATION = "extra-vouchers-2026-08";
+const PENALTY_VOUCHERS_MIGRATION = "penalty-vouchers-2026-08";
 
 export type Voucher = {
   id: string;
@@ -107,6 +108,12 @@ const EXTRA_VOUCHERS = [
   { id: "put-alberto-to-sleep", title: "Dormir a Alberto", description: "Encargarse de acompañar y ayudar a Alberto a dormirse.", points: 5 },
 ] as const;
 
+const PENALTY_VOUCHERS = [
+  { id: "getting-angry", title: "Cabrearse durante una actividad", description: "Penalización por enfadarse, crear mal ambiente o tomarse demasiado en serio una actividad familiar.", points: -2, category: "activities" as const },
+  { id: "arriving-late", title: "Llegar tarde a una actividad", description: "Penalización por llegar tarde y hacer esperar al resto de participantes sin una causa justificada.", points: -3, category: "activities" as const },
+  { id: "not-doing-task", title: "No hacer la tarea asignada", description: "Penalización por comprometerse con una tarea y dejarla sin hacer ni avisar al organizador.", points: -5, category: "collaboration" as const },
+] as const;
+
 const LOGICAL_VOUCHER_ORDER = [
   "Sacar la mesa",
   "Ayudar a poner la mesa",
@@ -183,7 +190,24 @@ function toProposal(entity: ProposalEntity): VoucherProposal {
 function validateVoucher(input: { title: string; description: string; points: number }) {
   if (input.title.trim().length < 3 || input.title.trim().length > 80) throw new Error("Título no válido.");
   if (input.description.trim().length < 5 || input.description.trim().length > 500) throw new Error("Descripción no válida.");
-  if (!Number.isInteger(input.points) || input.points < 1 || input.points > 5) throw new Error("Los puntos deben estar entre 1 y 5.");
+  if (!Number.isInteger(input.points) || input.points === 0 || input.points < -100 || input.points > 100) throw new Error("Los puntos deben ser un entero entre -100 y 100, distinto de cero.");
+}
+
+async function ensurePenaltyVouchers(client: TableClient) {
+  try {
+    await client.getEntity(MIGRATION_PARTITION, PENALTY_VOUCHERS_MIGRATION);
+    return;
+  } catch (error) {
+    if (typeof error !== "object" || error === null || !("statusCode" in error) || error.statusCode !== 404) throw error;
+  }
+  await Promise.all(PENALTY_VOUCHERS.map(async (voucher, index) => {
+    try {
+      await client.createEntity<VoucherEntity>({ partitionKey: VOUCHER_PARTITION, rowKey: voucher.id, title: voucher.title, description: voucher.description, points: voucher.points, active: true, createdAt: new Date().toISOString(), sortOrder: 900 + index, category: voucher.category, maxReservations: 0, reservedUserIds: "[]" });
+    } catch (error) {
+      if (typeof error !== "object" || error === null || !("statusCode" in error) || error.statusCode !== 409) throw error;
+    }
+  }));
+  await client.upsertEntity({ partitionKey: MIGRATION_PARTITION, rowKey: PENALTY_VOUCHERS_MIGRATION, appliedAt: new Date().toISOString() });
 }
 
 async function ensureExtraVouchers(client: TableClient) {
@@ -239,11 +263,12 @@ async function ensureExtraVouchers(client: TableClient) {
 export async function listVouchers(options?: { includeInactive?: boolean }) {
   const client = await getTableClient();
   const extraVouchersAdded = await ensureExtraVouchers(client);
+  await ensurePenaltyVouchers(client);
   const vouchers: Voucher[] = [];
   let storedVoucherCount = 0;
   const entities = client.listEntities<VoucherEntity>({ queryOptions: { filter: `PartitionKey eq '${VOUCHER_PARTITION}'` } });
   for await (const entity of entities) {
-    storedVoucherCount += 1;
+    if (!PENALTY_VOUCHERS.some((voucher) => voucher.id === entity.rowKey)) storedVoucherCount += 1;
     const expectedSortOrder = entity.sortOrder ?? getDefaultSortOrder(entity.title);
     if (entity.sortOrder === undefined || !isVoucherCategory(entity.category)) {
       entity.sortOrder = expectedSortOrder;

@@ -144,7 +144,7 @@ export default async function AdminHomePage({ searchParams }: AdminHomePageProps
                         </td>
                         <td className="px-5 py-4">
                           <label className="sr-only" htmlFor={`${formId}-points`}>Puntos</label>
-                          <input id={`${formId}-points`} form={formId} name="points" type="number" min={0} step={1} defaultValue={user.points} required className={inputClassName} />
+                          <input id={`${formId}-points`} form={formId} name="points" type="number" step={1} defaultValue={user.points} required className={inputClassName} />
                         </td>
                         <td className="px-5 py-4">
                           <label className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold ${user.approved ? "bg-emerald-50 text-emerald-700" : "bg-orange-50 text-orange-700"}`}>

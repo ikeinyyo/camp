@@ -10,7 +10,7 @@ import type { User } from "@/lib/users";
 
 type ClaimResponse = { claim: VoucherClaim; qrCode: string; payload: string };
 
-export function VoucherCatalog({ vouchers: initialVouchers, activeUser, previewOnly = false }: { vouchers: Voucher[]; activeUser: User; previewOnly?: boolean }) {
+export function VoucherCatalog({ vouchers: initialVouchers, activeUser, users, previewOnly = false }: { vouchers: Voucher[]; activeUser: User; users: User[]; previewOnly?: boolean }) {
   const activeUserId = activeUser.id;
   const requestIdRef = useRef(0);
   const [vouchers, setVouchers] = useState(initialVouchers);
@@ -20,6 +20,7 @@ export function VoucherCatalog({ vouchers: initialVouchers, activeUser, previewO
   const [error, setError] = useState("");
   const [confirmingReservation, setConfirmingReservation] = useState(false);
   const [reservationMessage, setReservationMessage] = useState("");
+  const usersById = new Map(users.map((user) => [user.id, user]));
 
   useEffect(() => {
     if (!selectedVoucher) return;
@@ -104,11 +105,12 @@ export function VoucherCatalog({ vouchers: initialVouchers, activeUser, previewO
                 <button key={voucher.id} type="button" onClick={() => openVoucher(voucher)} className="group touch-manipulation rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-sm transition sm:hover:-translate-y-1 sm:hover:border-[var(--accent)] sm:hover:shadow-lg">
                   <div className="flex items-start justify-between gap-4">
                     <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--primary-subtle)] text-2xl text-[var(--primary)]"><BsTicketPerforated aria-hidden="true" /></span>
-                    <span className="rounded-full bg-[var(--accent-subtle)] px-3 py-1 text-sm font-black text-[var(--accent-hover)]">+{voucher.points} pts</span>
+                    <span className={`rounded-full px-3 py-1 text-sm font-black ${voucher.points < 0 ? "bg-red-50 text-red-700" : "bg-[var(--accent-subtle)] text-[var(--accent-hover)]"}`}>{voucher.points > 0 ? "+" : ""}{voucher.points} pts</span>
                   </div>
                   <h3 className="mt-5 text-xl font-black text-slate-900">{voucher.title}</h3>
                   <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{voucher.description}</p>
                   {voucher.maxReservations !== null && <span className={`mt-4 flex items-center gap-2 text-sm font-bold ${voucher.reservedUserIds.length >= voucher.maxReservations && !voucher.reservedUserIds.includes(activeUserId) ? "text-red-600" : "text-[var(--accent)]"}`}><BsPeople /> {voucher.reservedUserIds.includes(activeUserId) ? "Tienes plaza" : voucher.reservedUserIds.length >= voucher.maxReservations ? "Completo" : `${voucher.maxReservations - voucher.reservedUserIds.length} ${voucher.maxReservations - voucher.reservedUserIds.length === 1 ? "plaza libre" : "plazas libres"}`}</span>}
+                  {voucher.maxReservations !== null && voucher.reservedUserIds.length > 0 && <span className="mt-3 block truncate text-xs font-semibold text-slate-500">Reservado por {voucher.reservedUserIds.map((id) => usersById.get(id)?.displayName).filter(Boolean).join(", ")}</span>}
                   <span className="mt-5 inline-block text-sm font-bold text-[var(--primary)]">Ver vale →</span>
                 </button>
               ))}
@@ -124,9 +126,10 @@ export function VoucherCatalog({ vouchers: initialVouchers, activeUser, previewO
             <p className="text-sm font-black uppercase tracking-[0.2em] text-[var(--accent)]">Vale</p>
             <h2 id="voucher-title" className="mt-3 pr-10 text-3xl font-black">{selectedVoucher.title}</h2>
             <p className="mt-4 leading-7 text-slate-600">{selectedVoucher.description}</p>
-            <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--accent-subtle)] px-4 py-2 font-black text-[var(--accent-hover)]"><BsCheck2Circle aria-hidden="true" /> {selectedVoucher.points} puntos al validarlo</div>
+            <div className={`mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 font-black ${selectedVoucher.points < 0 ? "bg-red-50 text-red-700" : "bg-[var(--accent-subtle)] text-[var(--accent-hover)]"}`}><BsCheck2Circle aria-hidden="true" /> {selectedVoucher.points > 0 ? "+" : ""}{selectedVoucher.points} puntos al validarlo</div>
             <div className="mt-5 flex items-center gap-3 rounded-2xl border border-[var(--primary-border)] bg-[var(--primary-subtle)] p-4 text-left"><UserAvatar user={activeUser} className="h-12 w-12" /><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">QR generado para</p><p className="truncate text-lg font-black text-[var(--primary-dark)]">{activeUser.displayName}</p><p className="truncate text-sm text-slate-500">@{activeUser.username}</p></div></div>
             {selectedVoucher.maxReservations !== null && <div className="mt-3 flex items-center gap-2 rounded-2xl bg-slate-100 p-4 font-bold text-slate-700"><BsPeople className="shrink-0 text-xl text-[var(--primary)]" /> {selectedVoucher.reservedUserIds.includes(activeUserId) ? "Tienes una plaza reservada" : selectedVoucher.reservedUserIds.length >= selectedVoucher.maxReservations ? "No quedan plazas disponibles" : `${selectedVoucher.maxReservations - selectedVoucher.reservedUserIds.length} de ${selectedVoucher.maxReservations} plazas disponibles`}</div>}
+            {selectedVoucher.maxReservations !== null && selectedVoucher.reservedUserIds.length > 0 && <div className="mt-3 rounded-2xl border border-slate-200 p-4"><p className="text-xs font-black uppercase tracking-wider text-slate-500">Plazas reservadas</p><div className="mt-3 flex flex-wrap gap-2">{selectedVoucher.reservedUserIds.map((id) => usersById.get(id)).filter((user): user is User => Boolean(user)).map((user) => <span key={user.id} className="inline-flex items-center gap-2 rounded-full bg-[var(--primary-subtle)] py-1.5 pl-1.5 pr-3 text-sm font-bold text-[var(--primary-dark)]"><UserAvatar user={user} className="h-7 w-7" textClassName="text-xs" />{user.displayName}</span>)}</div></div>}
             {reservationMessage && <p role="status" className="mt-4 rounded-2xl bg-emerald-50 p-4 text-sm font-bold leading-6 text-emerald-700">{reservationMessage}</p>}
 
             {selectedVoucher.maxReservations !== null && !selectedVoucher.reservedUserIds.includes(activeUserId) ? (

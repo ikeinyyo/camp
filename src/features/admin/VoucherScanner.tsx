@@ -134,7 +134,7 @@ export function VoucherScanner() {
           <div role="status" className={`rounded-2xl p-5 text-center ${result.alreadyRedeemed ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-800"}`}>
             {result.alreadyRedeemed ? <BsExclamationTriangleFill aria-hidden="true" className="mx-auto text-3xl" /> : <BsCheckCircleFill aria-hidden="true" className="mx-auto text-4xl" />}
             <p className="mt-3 text-lg font-black">{result.alreadyRedeemed ? "Vale ya canjeado" : "¡Vale validado!"}</p>
-            <p className="mt-1 text-sm font-semibold">{result.alreadyRedeemed ? "Este código ya se había utilizado anteriormente." : `+${result.points} puntos para ${result.displayName}`}</p>
+            <p className="mt-1 text-sm font-semibold">{result.alreadyRedeemed ? "Este código ya se había utilizado anteriormente." : `${result.points > 0 ? "+" : ""}${result.points} puntos para ${result.displayName}`}</p>
             <button type="button" onClick={startScanner} className="mt-4 rounded-xl bg-white px-4 py-2.5 text-sm font-bold shadow-sm">Escanear otro vale</button>
           </div>
         )}

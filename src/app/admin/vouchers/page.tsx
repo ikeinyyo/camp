@@ -62,7 +62,7 @@ export default async function AdminVouchersPage({ searchParams }: Props) {
               <label className="grid gap-2 text-sm font-bold">Título<input name="title" required minLength={3} maxLength={80} className={inputClass} /></label>
               <label className="grid gap-2 text-sm font-bold">Descripción<input name="description" required minLength={5} maxLength={500} className={inputClass} /></label>
               <label className="grid gap-2 text-sm font-bold">Categoría<select name="category" required className={inputClass}>{VOUCHER_CATEGORIES.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-              <label className="grid gap-2 text-sm font-bold">Puntos<input name="points" type="number" min={1} max={5} defaultValue={5} required className={inputClass} /></label>
+              <label className="grid gap-2 text-sm font-bold">Puntos<input name="points" type="number" min={-100} max={100} defaultValue={5} required className={inputClass} /></label>
               <label className="grid gap-2 text-sm font-bold">Máx. plazas<input name="maxReservations" type="number" min={1} placeholder="Ilimitadas" className={inputClass} /></label>
               <button type="submit" className="rounded-xl bg-[var(--primary)] px-5 py-2.5 text-sm font-bold text-white">+ Crear vale</button>
             </form>
