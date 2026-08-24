@@ -22,7 +22,9 @@ export function NavBar({
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isAccessOpen, setIsAccessOpen] = useState(false);
+  const [isTournamentsOpen, setIsTournamentsOpen] = useState(false);
   const accessMenuRef = useRef<HTMLDivElement>(null);
+  const tournamentsMenuRef = useRef<HTMLDivElement>(null);
   const activeUser =
     activeUsers.find((user) => user.id === activeUserId) ?? activeUsers[0];
   const navigationItems: Array<{ label: string; href: string; section: SectionId }> = [
@@ -38,26 +40,31 @@ export function NavBar({
     ...(activeUser && enabledSections.games
       ? [{ label: "Juegos", href: "/juegos", section: "games" as const }]
       : []),
-    ...(enabledSections.tapas
-      ? [{ label: "Tapas", href: "/tapas", section: "tapas" as const }]
-      : []),
-    ...(enabledSections.talents
-      ? [{ label: "Talentos", href: "/talentos", section: "talents" as const }]
-      : []),
-    ...(enabledSections.ranking
-      ? [{ label: "Ranking", href: "/ranking", section: "ranking" as const }]
-      : []),
   ].filter((item) => !sectionAuthentication[item.section] || Boolean(activeUser));
+  const tournamentItems: Array<{ label: string; href: string; section: SectionId }> = [
+    ...(enabledSections.tapas ? [{ label: "Concurso de tapas", href: "/tapas", section: "tapas" as const }] : []),
+    ...(enabledSections.talents ? [{ label: "Concurso de talentos", href: "/talentos", section: "talents" as const }] : []),
+    ...(enabledSections.domino ? [{ label: "Campeonato de dominó", href: "/domino", section: "domino" as const }] : []),
+  ].filter((item) => !sectionAuthentication[item.section] || Boolean(activeUser));
+  const rankingItem = enabledSections.ranking && (!sectionAuthentication.ranking || activeUser)
+    ? { label: "Ranking", href: "/ranking" }
+    : null;
 
   useEffect(() => {
     function closeWhenClickingOutside(event: PointerEvent) {
       if (!accessMenuRef.current?.contains(event.target as Node)) {
         setIsAccessOpen(false);
       }
+      if (!tournamentsMenuRef.current?.contains(event.target as Node)) {
+        setIsTournamentsOpen(false);
+      }
     }
 
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setIsAccessOpen(false);
+      if (event.key === "Escape") {
+        setIsAccessOpen(false);
+        setIsTournamentsOpen(false);
+      }
     }
 
     document.addEventListener("pointerdown", closeWhenClickingOutside);
@@ -86,7 +93,7 @@ export function NavBar({
             Gallardo Camp
           </Link>
 
-          <ul className="hidden items-center gap-2 md:flex">
+          <ul className="hidden items-center gap-1 lg:flex">
             {navigationItems.map((item) => (
               <li key={item.href}>
                 <Link
@@ -99,6 +106,13 @@ export function NavBar({
                 </Link>
               </li>
             ))}
+            {tournamentItems.length > 0 && <li>
+              <div ref={tournamentsMenuRef} className="relative">
+                <button type="button" aria-haspopup="menu" aria-expanded={isTournamentsOpen} onClick={() => setIsTournamentsOpen((open) => !open)} className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition hover:bg-[var(--primary-subtle)] hover:text-[var(--primary)] ${tournamentItems.some((item) => pathname.startsWith(item.href)) ? "bg-[var(--accent-soft)] text-[var(--accent-hover)]" : "text-slate-700"}`}>Torneos<BsChevronDown aria-hidden="true" className={`text-xs transition ${isTournamentsOpen ? "rotate-180" : ""}`} /></button>
+                {isTournamentsOpen && <div role="menu" className="absolute left-0 z-50 mt-2 w-60 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">{tournamentItems.map((item) => <Link key={item.href} href={item.href} onClick={() => setIsTournamentsOpen(false)} aria-current={pathname.startsWith(item.href) ? "page" : undefined} className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-[var(--primary-subtle)] aria-[current=page]:bg-[var(--accent-soft)] aria-[current=page]:text-[var(--accent-hover)]">{item.label}</Link>)}</div>}
+              </div>
+            </li>}
+            {rankingItem && <li><Link href={rankingItem.href} onClick={() => setIsOpen(false)} aria-current={pathname === rankingItem.href ? "page" : undefined} className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[var(--primary-subtle)] hover:text-[var(--primary)] aria-[current=page]:bg-[var(--accent-soft)] aria-[current=page]:text-[var(--accent-hover)]">{rankingItem.label}</Link></li>}
           </ul>
         </div>
 
@@ -163,7 +177,7 @@ export function NavBar({
           aria-expanded={isOpen}
           aria-controls="mobile-navigation"
           onClick={() => setIsOpen((open) => !open)}
-          className="grid h-11 w-11 place-items-center rounded-xl text-slate-800 transition hover:bg-slate-100 md:hidden"
+          className="grid h-11 w-11 place-items-center rounded-xl text-slate-800 transition hover:bg-slate-100 lg:hidden"
         >
           <span aria-hidden="true" className="relative block h-5 w-6">
             <span
@@ -182,7 +196,7 @@ export function NavBar({
 
       <div
         id="mobile-navigation"
-        className={`border-t border-slate-200 px-4 md:hidden ${isOpen ? "block" : "hidden"}`}
+        className={`border-t border-slate-200 px-4 lg:hidden ${isOpen ? "block" : "hidden"}`}
       >
         <ul className="mx-auto max-w-6xl py-3">
           {navigationItems.map((item) => (
@@ -197,6 +211,9 @@ export function NavBar({
               </Link>
             </li>
           ))}
+          {tournamentItems.length > 0 && <li className="px-4 pb-1 pt-3 text-xs font-black uppercase tracking-wider text-slate-400">Torneos</li>}
+          {tournamentItems.map((item) => <li key={item.href}><Link href={item.href} onClick={() => setIsOpen(false)} aria-current={pathname.startsWith(item.href) ? "page" : undefined} className="block rounded-xl px-4 py-3 font-semibold text-slate-700 transition hover:bg-[var(--primary-subtle)] hover:text-[var(--primary)] aria-[current=page]:bg-[var(--accent-soft)] aria-[current=page]:text-[var(--accent-hover)]">{item.label}</Link></li>)}
+          {rankingItem && <li><Link href={rankingItem.href} onClick={() => setIsOpen(false)} aria-current={pathname === rankingItem.href ? "page" : undefined} className="block rounded-xl px-4 py-3 font-semibold text-slate-700 transition hover:bg-[var(--primary-subtle)] hover:text-[var(--primary)] aria-[current=page]:bg-[var(--accent-soft)] aria-[current=page]:text-[var(--accent-hover)]">{rankingItem.label}</Link></li>}
         </ul>
       </div>
     </header>
