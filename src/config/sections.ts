@@ -26,8 +26,16 @@ export const SECTION_DEFINITIONS = [
   {
     id: "games",
     name: "Minijuegos",
-    description: "Trivia, palabra y frase diaria para ganar puntos antes del evento.",
+    description: "Trivia, palabra y encuesta diaria para ganar puntos antes del evento.",
     paths: ["/juegos"],
+    defaultEnabled: true,
+    defaultRequiresAuth: true,
+  },
+  {
+    id: "domino",
+    name: "Dominó",
+    description: "Inscripción y clasificación del campeonato de dominó.",
+    paths: ["/domino"],
     defaultEnabled: true,
     defaultRequiresAuth: true,
   },
