@@ -52,7 +52,7 @@ export async function addPointMovement(
   input: Omit<PointMovement, "id" | "createdAt">,
   options?: { uniqueKey?: string },
 ) {
-  if (!Number.isInteger(input.points) || input.points < 1) throw new Error("Puntos no válidos.");
+  if (!Number.isInteger(input.points) || input.points === 0) throw new Error("Puntos no válidos.");
   const movement: PointEntity = {
     partitionKey: input.userId,
     rowKey: options?.uniqueKey ?? randomUUID(),

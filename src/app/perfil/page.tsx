@@ -78,7 +78,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
                   {movement.source === "voucher" ? <BsTicketPerforated aria-hidden="true" /> : movement.source === "game" ? <BsController aria-hidden="true" /> : <BsCalendarEvent aria-hidden="true" />}
                 </span>
                 <span className="min-w-0 flex-1"><span className="block truncate font-bold">{movement.concept}</span><span className="block text-sm text-slate-500">{movement.detail} · {movement.method === "qr" ? "QR" : movement.method === "game" ? "Minijuego" : "Asignación manual"}</span></span>
-                <span className="shrink-0 text-lg font-black text-[var(--accent)]">+{movement.points}</span>
+                <span className={`shrink-0 text-lg font-black ${movement.points < 0 ? "text-red-600" : "text-[var(--accent)]"}`}>{movement.points > 0 ? "+" : ""}{movement.points}</span>
               </li>
             ))}
           </ul>

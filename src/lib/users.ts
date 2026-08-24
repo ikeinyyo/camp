@@ -172,7 +172,7 @@ export async function awardUserPoints(id: string, points: number) {
   const client = await getTableClient();
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const entity = await client.getEntity<UserEntity>(USER_PARTITION, id);
-    entity.points = Math.max(0, (entity.points ?? 0) + points);
+    entity.points = (entity.points ?? 0) + points;
     try {
       await client.updateEntity(entity, "Replace");
       return toUser(entity);
@@ -234,10 +234,10 @@ export async function updateUser(
   const username = input.username.trim();
   const displayName = input.displayName.trim();
   validateUserInput(username, displayName, input.password || undefined);
-  if (!Number.isInteger(input.points) || input.points < 0) {
+  if (!Number.isInteger(input.points)) {
     throw new UserValidationError(
       "points",
-      "Los puntos deben ser un número entero igual o mayor que cero.",
+      "Los puntos deben ser un número entero.",
     );
   }
 
