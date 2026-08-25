@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { rankUsers } from "@/lib/ranking";
+import { getRankedUsers } from "@/lib/ranking-data";
 import { isSectionEnabled } from "@/lib/sections";
-import { getUsersByIds, listUsers } from "@/lib/users";
+import { getUsersByIds } from "@/lib/users";
 import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
 import { listUserPointMovements } from "@/lib/points";
 import { BsCalendarEvent, BsController, BsTicketPerforated } from "react-icons/bs";
@@ -23,15 +23,15 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
   const session = readUserSessionToken(cookieStore.get(USER_COOKIE_NAME)?.value);
   if (!session) redirect("/login");
 
-  const [users, allUsers] = await Promise.all([
+  const [users, rankedUsers] = await Promise.all([
     getUsersByIds(session.userIds),
-    listUsers(),
+    getRankedUsers(),
   ]);
   const user = users.find((candidate) => candidate.id === session.activeUserId);
   if (!user) redirect("/login");
   const movements = await listUserPointMovements(user.id);
   const feedback = await searchParams;
-  const rankedUser = rankUsers(allUsers).find(
+  const rankedUser = rankedUsers.find(
     (candidate) => candidate.id === user.id,
   );
 

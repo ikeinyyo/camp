@@ -3,9 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BsTrophyFill } from "react-icons/bs";
-import { rankUsers } from "@/lib/ranking";
+import { getRankedUsers } from "@/lib/ranking-data";
 import { isSectionEnabled } from "@/lib/sections";
-import { listUsers } from "@/lib/users";
 import { UserAvatar } from "@/features/users/UserAvatar";
 import { FinalScoreCarousel } from "@/features/ranking/FinalScoreCarousel";
 import { getRankingConfig } from "@/lib/ranking-mode";
@@ -23,13 +22,33 @@ const podiumStyles: Record<number, string> = {
 };
 
 export default async function RankingPage() {
-  const [rankingEnabled, allUsers, config] = await Promise.all([
+  const [rankingEnabled, users, config] = await Promise.all([
     isSectionEnabled("ranking"),
-    listUsers(),
+    getRankedUsers(),
     getRankingConfig(),
   ]);
   if (!rankingEnabled) redirect("/");
-  const users = rankUsers(allUsers);
+  const tieBreakLabels = new Map<string, string>();
+  for (let start = 0; start < users.length;) {
+    let end = start + 1;
+    while (end < users.length && users[end].points === users[start].points) end += 1;
+    const group = users.slice(start, end);
+    if (group.length > 1) {
+      const criteria = [
+        { value: (user: (typeof users)[number]) => user.rankingTieBreak.contestPrizePoints, label: (value: number) => `${value} pts en concursos` },
+        { value: (user: (typeof users)[number]) => user.rankingTieBreak.activityParticipationPoints, label: (value: number) => `${value} pts en actividades` },
+        { value: (user: (typeof users)[number]) => user.rankingTieBreak.organizationVoucherPoints, label: (value: number) => `${value} pts en Organización` },
+        { value: (user: (typeof users)[number]) => user.rankingTieBreak.activitiesVoucherPoints, label: (value: number) => `${value} pts en vales de Actividades` },
+        { value: (user: (typeof users)[number]) => user.rankingTieBreak.collaborationVoucherPoints, label: (value: number) => `${value} pts en Colaboración` },
+        { value: (user: (typeof users)[number]) => user.rankingTieBreak.penaltyPoints, label: (value: number) => `${Math.abs(value)} pts de penalización` },
+        { value: (user: (typeof users)[number]) => user.rankingTieBreak.completedActions, label: (value: number) => `${value} acciones completadas` },
+      ];
+      const decidingCriterion = criteria.find((criterion) => new Set(group.map(criterion.value)).size > 1);
+      if (decidingCriterion) group.forEach((user) => tieBreakLabels.set(user.id, decidingCriterion.label(decidingCriterion.value(user))));
+      else group.forEach((user) => tieBreakLabels.set(user.id, "Desempate temporal"));
+    }
+    start = end;
+  }
   if (config.mode === "final")
     return <FinalScoreCarousel users={users} showPrizes={config.showPrizes} />;
 
@@ -62,6 +81,18 @@ export default async function RankingPage() {
             </figcaption>
           </figure>
         )}
+
+        <details className="mt-8 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm shadow-sm">
+          <summary className="cursor-pointer font-black text-[var(--primary-dark)]">¿Cómo se resuelven los empates?</summary>
+          <ol className="mt-3 list-decimal space-y-1 pl-5 leading-6 text-slate-600">
+            <li>Más puntos obtenidos por puestos en concursos.</li>
+            <li>Más puntos de participación en actividades.</li>
+            <li>Más puntos de vales de Organización.</li>
+            <li>Más puntos de vales de Actividades y después de Colaboración.</li>
+            <li>Menos penalizaciones y más acciones completadas.</li>
+            <li>Quien alcanzó antes su puntuación actual.</li>
+          </ol>
+        </details>
 
         {users.length === 0 ? (
           <div className="mt-10 rounded-3xl border border-dashed border-slate-300 p-10 text-center text-slate-600">
@@ -120,9 +151,7 @@ export default async function RankingPage() {
                           <span className="block truncate font-bold">
                             {user.displayName}
                           </span>
-                          <span className="block truncate text-sm leading-5 text-slate-500">
-                            {user.status || `@${user.username}`}
-                          </span>
+                          {tieBreakLabels.has(user.id) ? <span className="mt-0.5 flex min-w-0 items-center gap-2"><span className="max-w-full truncate rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-black text-orange-700 sm:text-xs">{tieBreakLabels.get(user.id)}</span><span className="hidden min-w-0 truncate text-sm text-slate-500 sm:block">{user.status || `@${user.username}`}</span></span> : <span className="block truncate text-sm leading-5 text-slate-500">{user.status || `@${user.username}`}</span>}
                         </span>
                       </Link>
                     </td>
