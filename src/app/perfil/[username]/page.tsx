@@ -4,9 +4,9 @@ import { notFound, redirect } from "next/navigation";
 import { BsCalendarEvent, BsController, BsTicketPerforated } from "react-icons/bs";
 import { UserAvatar } from "@/features/users/UserAvatar";
 import { listUserPointMovements } from "@/lib/points";
-import { rankUsers } from "@/lib/ranking";
+import { getRankedUsers } from "@/lib/ranking-data";
 import { isSectionEnabled } from "@/lib/sections";
-import { getUserByUsername, listUsers } from "@/lib/users";
+import { getUserByUsername } from "@/lib/users";
 
 export const dynamic = "force-dynamic";
 
@@ -18,11 +18,11 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
 export default async function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
   if (!(await isSectionEnabled("profile"))) redirect("/");
   const username = decodeURIComponent((await params).username);
-  const [user, allUsers] = await Promise.all([getUserByUsername(username), listUsers()]);
+  const [user, rankedUsers] = await Promise.all([getUserByUsername(username), getRankedUsers()]);
   if (!user) notFound();
   const [movements, rankedUser] = await Promise.all([
     listUserPointMovements(user.id),
-    Promise.resolve(rankUsers(allUsers).find((candidate) => candidate.id === user.id)),
+    Promise.resolve(rankedUsers.find((candidate) => candidate.id === user.id)),
   ]);
 
   return <main className="min-h-screen px-4 py-10 sm:px-6 sm:py-12">
