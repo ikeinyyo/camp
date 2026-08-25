@@ -10,7 +10,7 @@ import type { User } from "@/lib/users";
 
 type ClaimResponse = { claim: VoucherClaim; qrCode: string; payload: string };
 
-export function VoucherCatalog({ vouchers: initialVouchers, activeUser, users, previewOnly = false }: { vouchers: Voucher[]; activeUser: User; users: User[]; previewOnly?: boolean }) {
+export function VoucherCatalog({ vouchers: initialVouchers, activeUser, users, redeemedVoucherIds, previewOnly = false }: { vouchers: Voucher[]; activeUser: User; users: User[]; redeemedVoucherIds: string[]; previewOnly?: boolean }) {
   const activeUserId = activeUser.id;
   const requestIdRef = useRef(0);
   const [vouchers, setVouchers] = useState(initialVouchers);
@@ -21,6 +21,11 @@ export function VoucherCatalog({ vouchers: initialVouchers, activeUser, users, p
   const [confirmingReservation, setConfirmingReservation] = useState(false);
   const [reservationMessage, setReservationMessage] = useState("");
   const usersById = new Map(users.map((user) => [user.id, user]));
+  const reservedVouchers = vouchers.filter((voucher) => voucher.reservedUserIds.includes(activeUserId));
+  const voucherGroups = [
+    ...(reservedVouchers.length > 0 ? [{ id: "reserved", name: "Tus vales reservados", description: "Tus plazas confirmadas aparecen primero para que puedas encontrarlas rápidamente.", vouchers: reservedVouchers }] : []),
+    ...VOUCHER_CATEGORIES.map((category) => ({ ...category, vouchers: vouchers.filter((voucher) => voucher.category === category.id && !voucher.reservedUserIds.includes(activeUserId)) })),
+  ];
 
   useEffect(() => {
     if (!selectedVoucher) return;
@@ -95,14 +100,14 @@ export function VoucherCatalog({ vouchers: initialVouchers, activeUser, users, p
   return (
     <>
       <div className="grid gap-12">
-        {VOUCHER_CATEGORIES.map((category) => {
-          const categoryVouchers = vouchers.filter((voucher) => voucher.category === category.id);
+        {voucherGroups.map((category) => {
+          const categoryVouchers = category.vouchers;
           if (categoryVouchers.length === 0) return null;
           return <section key={category.id}>
             <div className="mb-5 border-l-4 border-[var(--accent)] pl-4"><h2 className="text-2xl font-black text-[var(--primary-dark)]">{category.name}</h2><p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">{category.description}</p></div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {categoryVouchers.map((voucher) => (
-                <button key={voucher.id} type="button" onClick={() => openVoucher(voucher)} className="group touch-manipulation rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-sm transition sm:hover:-translate-y-1 sm:hover:border-[var(--accent)] sm:hover:shadow-lg">
+                <button key={voucher.id} type="button" disabled={voucher.maxReservations !== null && redeemedVoucherIds.includes(voucher.id)} onClick={() => openVoucher(voucher)} className="group touch-manipulation rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-sm transition enabled:sm:hover:-translate-y-1 enabled:sm:hover:border-[var(--accent)] enabled:sm:hover:shadow-lg disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-65">
                   <div className="flex items-start justify-between gap-4">
                     <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--primary-subtle)] text-2xl text-[var(--primary)]"><BsTicketPerforated aria-hidden="true" /></span>
                     <span className={`rounded-full px-3 py-1 text-sm font-black ${voucher.points < 0 ? "bg-red-50 text-red-700" : "bg-[var(--accent-subtle)] text-[var(--accent-hover)]"}`}>{voucher.points > 0 ? "+" : ""}{voucher.points} pts</span>
@@ -111,7 +116,7 @@ export function VoucherCatalog({ vouchers: initialVouchers, activeUser, users, p
                   <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{voucher.description}</p>
                   {voucher.maxReservations !== null && <span className={`mt-4 flex items-center gap-2 text-sm font-bold ${voucher.reservedUserIds.length >= voucher.maxReservations && !voucher.reservedUserIds.includes(activeUserId) ? "text-red-600" : "text-[var(--accent)]"}`}><BsPeople /> {voucher.reservedUserIds.includes(activeUserId) ? "Tienes plaza" : voucher.reservedUserIds.length >= voucher.maxReservations ? "Completo" : `${voucher.maxReservations - voucher.reservedUserIds.length} ${voucher.maxReservations - voucher.reservedUserIds.length === 1 ? "plaza libre" : "plazas libres"}`}</span>}
                   {voucher.maxReservations !== null && voucher.reservedUserIds.length > 0 && <span className="mt-3 block truncate text-xs font-semibold text-slate-500">Reservado por {voucher.reservedUserIds.map((id) => usersById.get(id)?.displayName).filter(Boolean).join(", ")}</span>}
-                  <span className="mt-5 inline-block text-sm font-bold text-[var(--primary)]">Ver vale →</span>
+                  {voucher.maxReservations !== null && redeemedVoucherIds.includes(voucher.id) ? <span className="mt-5 inline-flex rounded-full bg-slate-200 px-3 py-1.5 text-sm font-black text-slate-600">Ya reclamado</span> : <span className="mt-5 inline-block text-sm font-bold text-[var(--primary)]">Ver vale →</span>}
                 </button>
               ))}
             </div>

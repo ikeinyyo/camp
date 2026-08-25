@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { TableClient, type TableEntity } from "@azure/data-tables";
 import { STORAGE_SETTINGS } from "@/config/storage";
 import { VOUCHER_CATEGORIES, type VoucherCategory } from "@/config/vouchers";
-import { addPointMovement } from "./points";
+import { addPointMovement, listUserPointMovements } from "./points";
 import { getUserById } from "./users";
 
 const VOUCHER_PARTITION = "voucher";
@@ -326,6 +326,25 @@ export async function updateVoucher(id: string, input: { title: string; descript
 
 export class VoucherFullError extends Error {}
 export class VoucherAlreadyReservedError extends Error {}
+export class VoucherAlreadyClaimedError extends Error {}
+
+async function listClaimsForVoucherAndUser(voucherId: string, userId: string) {
+  const claims: VoucherClaim[] = [];
+  const entities = (await getTableClient()).listEntities<ClaimEntity>({ queryOptions: { filter: `PartitionKey eq '${CLAIM_PARTITION}' and voucherId eq '${voucherId.replaceAll("'", "''")}' and userId eq '${userId.replaceAll("'", "''")}'` } });
+  for await (const entity of entities) claims.push(toClaim(entity));
+  return claims;
+}
+
+async function hasVoucherPointMovement(voucherId: string, userId: string) {
+  return (await listUserPointMovements(userId)).some((movement) => movement.source === "voucher" && movement.sourceId === voucherId);
+}
+
+export async function listVoucherClaimsForUser(userId: string) {
+  const claims: VoucherClaim[] = [];
+  const entities = (await getTableClient()).listEntities<ClaimEntity>({ queryOptions: { filter: `PartitionKey eq '${CLAIM_PARTITION}' and userId eq '${userId.replaceAll("'", "''")}'` } });
+  for await (const entity of entities) claims.push(toClaim(entity));
+  return claims;
+}
 
 export async function reserveVoucher(voucherId: string, userId: string) {
   if (!(await getUserById(userId))) throw new Error("El usuario no está disponible.");
@@ -409,8 +428,22 @@ export async function createVoucherClaim(voucherId: string, userId: string) {
   const [voucher, user] = await Promise.all([getVoucher(voucherId), getUserById(userId)]);
   if (!voucher?.active || !user) throw new Error("El vale o el usuario no están disponibles.");
   if (voucher.maxReservations !== null && !voucher.reservedUserIds.includes(userId)) throw new Error("Este vale está reservado para las personas apuntadas.");
-  const entity: ClaimEntity = { partitionKey: CLAIM_PARTITION, rowKey: randomUUID(), voucherId: voucher.id, voucherTitle: voucher.title, userId: user.id, username: user.username, displayName: user.displayName, points: voucher.points, status: "pending", createdAt: new Date().toISOString() };
-  await (await getTableClient()).createEntity(entity);
+  if (voucher.maxReservations !== null) {
+    if (await hasVoucherPointMovement(voucher.id, user.id)) throw new VoucherAlreadyClaimedError("Este vale ya se ha reclamado.");
+    const existing = await listClaimsForVoucherAndUser(voucher.id, user.id);
+    if (existing.some((claim) => claim.status === "redeemed")) throw new VoucherAlreadyClaimedError("Este vale ya se ha reclamado.");
+    const pending = existing.find((claim) => claim.status === "pending");
+    if (pending) return pending;
+  }
+  const entity: ClaimEntity = { partitionKey: CLAIM_PARTITION, rowKey: voucher.maxReservations === null ? randomUUID() : `reserved-${voucher.id}-${user.id}`, voucherId: voucher.id, voucherTitle: voucher.title, userId: user.id, username: user.username, displayName: user.displayName, points: voucher.points, status: "pending", createdAt: new Date().toISOString() };
+  try {
+    await (await getTableClient()).createEntity(entity);
+  } catch (error) {
+    if (voucher.maxReservations === null || typeof error !== "object" || !error || !("statusCode" in error) || error.statusCode !== 409) throw error;
+    const existing = await (await getTableClient()).getEntity<ClaimEntity>(CLAIM_PARTITION, entity.rowKey);
+    if (existing.status === "redeemed") throw new VoucherAlreadyClaimedError("Este vale ya se ha reclamado.");
+    return toClaim(existing);
+  }
   return toClaim(entity);
 }
 
@@ -420,11 +453,21 @@ export async function redeemVoucherClaim(claimId: string) {
   if (entity.status === "redeemed") return { claim: toClaim(entity), alreadyRedeemed: true };
   const voucher = await getVoucher(entity.voucherId);
   if (!voucher?.active || (voucher.maxReservations !== null && !voucher.reservedUserIds.includes(entity.userId))) throw new Error("El usuario ya no tiene una plaza reservada para este vale.");
+  if (voucher.maxReservations !== null) {
+    if (await hasVoucherPointMovement(voucher.id, entity.userId)) {
+      entity.status = "redeemed";
+      entity.redeemedAt = new Date().toISOString();
+      await client.updateEntity(entity, "Merge");
+      return { claim: toClaim(entity), alreadyRedeemed: true };
+    }
+    const previous = (await listClaimsForVoucherAndUser(voucher.id, entity.userId)).find((claim) => claim.id !== entity.rowKey && claim.status === "redeemed");
+    if (previous) return { claim: previous, alreadyRedeemed: true };
+  }
   entity.status = "redeemed";
   entity.redeemedAt = new Date().toISOString();
   await client.updateEntity(entity, "Merge");
   try {
-    await addPointMovement({ userId: entity.userId, points: entity.points, source: "voucher", sourceId: entity.voucherId, concept: entity.voucherTitle, detail: "Vale completado", method: "qr" });
+    await addPointMovement({ userId: entity.userId, points: entity.points, source: "voucher", sourceId: entity.voucherId, concept: entity.voucherTitle, detail: "Vale completado", method: "qr" }, voucher.maxReservations !== null ? { uniqueKey: `voucher-${voucher.id}` } : undefined);
   } catch (error) {
     entity.status = "pending";
     entity.redeemedAt = undefined;
@@ -438,6 +481,7 @@ export async function applyVoucherManually(voucherId: string, userId: string) {
   const [voucher, user] = await Promise.all([getVoucher(voucherId), getUserById(userId)]);
   if (!voucher?.active || !user) throw new Error("El vale o el usuario no están disponibles.");
   if (voucher.maxReservations !== null && !voucher.reservedUserIds.includes(userId)) throw new Error("El usuario no tiene una plaza reservada para este vale.");
-  await addPointMovement({ userId, points: voucher.points, source: "voucher", sourceId: voucher.id, concept: voucher.title, detail: "Vale asignado manualmente", method: "manual" });
+  if (voucher.maxReservations !== null && await hasVoucherPointMovement(voucher.id, userId)) throw new VoucherAlreadyClaimedError("Este vale ya se ha reclamado.");
+  await addPointMovement({ userId, points: voucher.points, source: "voucher", sourceId: voucher.id, concept: voucher.title, detail: "Vale asignado manualmente", method: "manual" }, voucher.maxReservations !== null ? { uniqueKey: `voucher-${voucher.id}` } : undefined);
   return { voucher, user };
 }
