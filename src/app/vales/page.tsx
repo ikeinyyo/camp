@@ -4,8 +4,9 @@ import { redirect } from "next/navigation";
 import { VoucherCatalog } from "@/features/vouchers/VoucherCatalog";
 import { isSectionEnabled } from "@/lib/sections";
 import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
+import { listUserPointMovements } from "@/lib/points";
 import { getUserById, listUsers } from "@/lib/users";
-import { getVoucherState, listVouchers } from "@/lib/vouchers";
+import { getVoucherState, listVoucherClaimsForUser, listVouchers } from "@/lib/vouchers";
 
 export const metadata: Metadata = { title: "Vales | Gallardo Camp 2026" };
 export const dynamic = "force-dynamic";
@@ -15,7 +16,8 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
   const cookieStore = await cookies();
   const session = readUserSessionToken(cookieStore.get(USER_COOKIE_NAME)?.value);
   if (!session) redirect("/login");
-  const [user, state, params, vouchers, users] = await Promise.all([getUserById(session.activeUserId), getVoucherState(), searchParams, listVouchers(), listUsers()]);
+  const [user, state, params, vouchers, users, claims, movements] = await Promise.all([getUserById(session.activeUserId), getVoucherState(), searchParams, listVouchers(), listUsers(), listVoucherClaimsForUser(session.activeUserId), listUserPointMovements(session.activeUserId)]);
+  const redeemedVoucherIds = [...new Set([...claims.filter((claim) => claim.status === "redeemed").map((claim) => claim.voucherId), ...movements.filter((movement) => movement.source === "voucher").map((movement) => movement.sourceId)])];
   if (!user) redirect("/login");
 
   return (
@@ -40,10 +42,10 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
           </section>
           <section>
             <div className="mb-6 text-center"><h2 className="text-2xl font-black">Vales que ya tenemos</h2><p className="mt-2 text-slate-600">Consulta las tareas actuales para proponer algo diferente. Ya puedes reservar los que tengan plazas limitadas; los QR estarán disponibles cuando empiece la Gallardo Camp.</p></div>
-            <VoucherCatalog vouchers={vouchers} activeUser={user} users={users} previewOnly />
+            <VoucherCatalog vouchers={vouchers} activeUser={user} users={users} redeemedVoucherIds={redeemedVoucherIds} previewOnly />
           </section>
           </div>
-        ) : <VoucherCatalog vouchers={vouchers} activeUser={user} users={users} />}
+        ) : <VoucherCatalog vouchers={vouchers} activeUser={user} users={users} redeemedVoucherIds={redeemedVoucherIds} />}
       </section>
     </main>
   );
