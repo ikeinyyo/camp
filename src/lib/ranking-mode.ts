@@ -7,7 +7,8 @@ const PARTITION = "config";
 const ROW = "mode";
 
 export type RankingMode = "live" | "final";
-type RankingConfigEntity = TableEntity<{ mode: RankingMode; updatedAt: string }>;
+export type RankingConfig = { mode: RankingMode; showPrizes: boolean };
+type RankingConfigEntity = TableEntity<{ mode: RankingMode; showPrizes?: boolean; updatedAt: string }>;
 
 let tableReady: Promise<TableClient> | undefined;
 
@@ -24,19 +25,29 @@ async function table() {
   return tableReady;
 }
 
-export async function getRankingMode(): Promise<RankingMode> {
+export async function getRankingConfig(): Promise<RankingConfig> {
   try {
-    return (await (await table()).getEntity<RankingConfigEntity>(PARTITION, ROW)).mode;
+    const entity = await (await table()).getEntity<RankingConfigEntity>(PARTITION, ROW);
+    return { mode: entity.mode, showPrizes: entity.showPrizes ?? true };
   } catch (error) {
     if (typeof error === "object" && error && "statusCode" in error && error.statusCode === 404) {
-      await setRankingMode("live");
-      return "live";
+      await (await table()).upsertEntity<RankingConfigEntity>({ partitionKey: PARTITION, rowKey: ROW, mode: "live", showPrizes: true, updatedAt: new Date().toISOString() }, "Merge");
+      return { mode: "live", showPrizes: true };
     }
     throw error;
   }
 }
 
+export async function getRankingMode(): Promise<RankingMode> {
+  return (await getRankingConfig()).mode;
+}
+
 export async function setRankingMode(mode: RankingMode) {
   if (mode !== "live" && mode !== "final") throw new Error("Modo de ranking no válido.");
   await (await table()).upsertEntity<RankingConfigEntity>({ partitionKey: PARTITION, rowKey: ROW, mode, updatedAt: new Date().toISOString() }, "Merge");
+}
+
+export async function setRankingPrizesVisibility(showPrizes: boolean) {
+  const mode = await getRankingMode();
+  await (await table()).upsertEntity<RankingConfigEntity>({ partitionKey: PARTITION, rowKey: ROW, mode, showPrizes, updatedAt: new Date().toISOString() }, "Merge");
 }
