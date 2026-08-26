@@ -7,7 +7,7 @@ import { UserAvatar } from "@/features/users/UserAvatar";
 import type { User } from "@/lib/users";
 
 type Stage = "ready" | "spinning-user" | "user-selected" | "spinning-points" | "result" | "assigned";
-type WheelItem = { key: string; label: string };
+type WheelItem = { key: string; label: string; user?: User };
 
 const WHEEL_COLORS = ["#d55212", "#f39a35", "#087653", "#12a071", "#f2bd58"];
 
@@ -37,7 +37,11 @@ function RouletteWheel({ items, rotation, spinning, children }: { items: WheelIt
         {items.map((item, index) => {
           const angle = (index + 0.5) * segment;
           const radians = angle * Math.PI / 180;
-          return <span key={item.key} className={`absolute z-10 max-w-[22%] -translate-x-1/2 -translate-y-1/2 truncate text-center font-black text-white drop-shadow-[0_1px_1px_rgb(0_0_0/.45)] ${items.length > 14 ? "text-[10px] sm:text-xs" : "text-xs sm:text-sm"}`} style={{ left: `${50 + Math.sin(radians) * 36}%`, top: `${50 - Math.cos(radians) * 36}%` }}>{item.label}</span>;
+          return <span key={item.key} className="absolute z-10 -translate-x-1/2 -translate-y-1/2" style={{ left: `${50 + Math.sin(radians) * 36}%`, top: `${50 - Math.cos(radians) * 36}%` }}>
+            <span className="block transition-transform duration-[4200ms] ease-[cubic-bezier(.12,.68,.16,1)]" style={{ transform: `rotate(${-rotation}deg)` }}>
+              {item.user ? <UserAvatar user={item.user} className="h-8 w-8 ring-2 ring-white sm:h-11 sm:w-11" textClassName="text-xs sm:text-sm" /> : <span className="block min-w-7 text-center text-sm font-black text-white drop-shadow-[0_1px_1px_rgb(0_0_0/.45)] sm:text-base">{item.label}</span>}
+            </span>
+          </span>;
         })}
       </div>
       <div className={`absolute left-1/2 top-1/2 z-10 grid h-[38%] w-[38%] -translate-x-1/2 -translate-y-1/2 place-items-center overflow-hidden rounded-full border-[7px] border-white bg-[var(--primary-dark)] p-2 text-center shadow-xl ${spinning ? "animate-pulse" : ""}`}>{children ?? <BsGiftFill className="text-4xl text-orange-300" />}</div>
@@ -62,7 +66,7 @@ export function PointsLottery({ users }: { users: User[] }) {
     return () => document.removeEventListener("fullscreenchange", update);
   }, []);
 
-  const userItems = users.map((user) => ({ key: user.id, label: users.length > 12 ? user.displayName.trim().charAt(0).toUpperCase() : user.displayName.trim().split(/\s+/)[0] }));
+  const userItems = users.map((user) => ({ key: user.id, label: user.displayName, user }));
   const pointItems = LOTTERY_PRIZE_SLOTS.map((points, index) => ({ key: `${points}-${index}`, label: String(points) }));
 
   async function spinUsers() {
