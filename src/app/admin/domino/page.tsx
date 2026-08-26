@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BsCheckCircleFill, BsPeopleFill, BsTrophyFill } from "react-icons/bs";
 import { AdminNavigation } from "@/features/admin/AdminNavigation";
+import { ContestAwardsPanel } from "@/features/admin/ContestAwardsPanel";
 import { ResetDominoButton } from "@/features/admin/ResetDominoButton";
 import { UserAvatar } from "@/features/users/UserAvatar";
+import { getContestAwardsPreview } from "@/lib/contest-awards";
 import { DOMINO_ROUNDS, getDominoTournament, type DominoTeam } from "@/lib/domino";
 import { listUsers } from "@/lib/users";
 
@@ -16,7 +18,7 @@ function Team({ team }: { team?: DominoTeam }) {
 }
 
 export default async function AdminDominoPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string; message?: string }> }) {
-  const [tournament, params, users] = await Promise.all([getDominoTournament(), searchParams, listUsers()]);
+  const [tournament, params, users, awards] = await Promise.all([getDominoTournament(), searchParams, listUsers(), getContestAwardsPreview("domino")]);
   const approvedUsers = users.filter((user) => user.approved);
   const registrationByUser = new Map(tournament.registrations.map((registration) => [registration.userId, registration.choice]));
   const joined = tournament.registrations.filter((item) => item.choice === "joined");
@@ -41,6 +43,8 @@ export default async function AdminDominoPage({ searchParams }: { searchParams: 
       </article>
       <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><div className="flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-wider text-slate-500">Inscripciones</p><h2 className="mt-2 text-2xl font-black">{joined.length} participantes</h2></div><BsPeopleFill className="text-3xl text-[var(--primary)]" /></div><div className="mt-5 flex flex-wrap gap-2">{joined.map((item) => item.user && <span key={item.userId} className="inline-flex items-center gap-2 rounded-full bg-[var(--primary-subtle)] py-1.5 pl-1.5 pr-3 text-sm font-bold"><UserAvatar user={item.user} className="h-7 w-7" textClassName="text-xs" />{item.user.displayName}</span>)}</div>{declined.length > 0 && <p className="mt-5 text-sm text-slate-500">No participan: {declined.map((item) => item.user?.displayName).filter(Boolean).join(", ")}.</p>}</article>
     </section>
+
+    <div className="pb-8"><ContestAwardsPanel preview={awards} action="/admin/domino/awards" /></div>
 
     <section className="pb-8"><div><h2 className="text-2xl font-black">Gestionar participantes</h2><p className="mt-2 text-slate-600">Puedes apuntar o desapuntar usuarios mientras la inscripción esté abierta.</p></div><div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{approvedUsers.map((user) => { const choice = registrationByUser.get(user.id); return <article key={user.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex min-w-0 items-center gap-3"><UserAvatar user={user} className="h-10 w-10" textClassName="text-sm" /><div className="min-w-0"><p className="truncate font-black">{user.displayName}</p><p className="truncate text-xs text-slate-500">@{user.username}</p></div></div><form action={`/admin/domino/registrations/${user.id}`} method="post" className="mt-4 grid grid-cols-2 gap-2"><button name="choice" value="joined" disabled={tournament.mode !== "registration"} className={`rounded-lg border px-3 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50 ${choice === "joined" ? "border-[var(--primary)] bg-[var(--primary)] text-white" : "border-slate-200"}`}>Apuntado</button><button name="choice" value="declined" disabled={tournament.mode !== "registration"} className={`rounded-lg border px-3 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50 ${choice === "declined" ? "border-slate-600 bg-slate-700 text-white" : "border-slate-200"}`}>No participa</button></form></article>; })}</div></section>
 

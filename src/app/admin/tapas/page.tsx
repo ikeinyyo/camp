@@ -2,12 +2,14 @@
 import Link from "next/link";
 import { BsHouse } from "react-icons/bs";
 import { AdminNavigation } from "@/features/admin/AdminNavigation";
+import { ContestAwardsPanel } from "@/features/admin/ContestAwardsPanel";
+import { getContestAwardsPreview } from "@/lib/contest-awards";
 import { getContestState, listTapas, listTapaVotes } from "@/lib/tapas";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminTapasPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
-  const [{ saved, error }, tapas, votes, state] = await Promise.all([searchParams, listTapas({ includeInactive: true }), listTapaVotes(), getContestState()]);
+export default async function AdminTapasPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string; message?: string }> }) {
+  const [{ saved, error, message }, tapas, votes, state, awards] = await Promise.all([searchParams, listTapas({ includeInactive: true }), listTapaVotes(), getContestState(), getContestAwardsPreview("tapas")]);
   const names = new Map(tapas.map((tapa) => [tapa.id, tapa.name]));
 
   return <main className="min-h-screen min-w-0 max-w-full overflow-x-hidden px-3 py-4 sm:px-6 sm:py-12"><div className="mx-auto min-w-0 max-w-7xl">
@@ -15,8 +17,9 @@ export default async function AdminTapasPage({ searchParams }: { searchParams: P
     <AdminNavigation active="tapas" />
     <div className="flex min-w-0 max-w-full flex-col gap-5 py-4 sm:gap-8 sm:py-10">
       {saved && <p className="rounded-xl bg-emerald-50 p-4 font-bold text-emerald-700">Operación realizada correctamente.</p>}
-      {error && <p className="rounded-xl bg-red-50 p-4 font-bold text-red-700">No se pudo realizar la operación.</p>}
+      {error && <p className="rounded-xl bg-red-50 p-4 font-bold text-red-700">{message ?? "No se pudo realizar la operación."}</p>}
       <section className="max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"><h2 className="text-xl font-black">Estado del concurso</h2><p className="mt-1 text-sm text-slate-600">Controla qué ven los participantes.</p><form action="/admin/tapas/state" method="post" className="mt-4" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 6, width: "100%", maxWidth: "100%" }}>{([['catalog', 'Catálogo'], ['voting', 'Votación'], ['ranking', 'Ranking']] as const).map(([value, label]) => <button key={value} name="state" value={value} className={`min-w-0 rounded-xl px-3 py-3 text-sm font-bold ${state === value ? value === 'catalog' ? 'bg-[var(--primary)] text-white' : value === 'voting' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--primary-dark)] text-white' : 'bg-slate-100'}`}>{label}</button>)}</form></section>
+      <ContestAwardsPanel preview={awards} action="/admin/tapas/awards" />
       <section className="min-w-0 max-w-full overflow-hidden"><div className="flex min-w-0 flex-col items-start gap-3"><div><h2 className="text-xl font-black sm:text-2xl">Tapas</h2><p className="mt-1 text-sm text-slate-600">{tapas.length} propuestas registradas.</p></div><Link href="/admin/tapas/new" className="inline-flex max-w-full items-center justify-center self-start rounded-xl bg-[var(--primary)] px-4 py-2.5 text-center text-sm font-bold text-white">+ Crear tapa</Link></div>
         <div className="mt-4 sm:mt-5" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10, width: "100%", maxWidth: "100%" }}>{tapas.map((tapa) => <article key={tapa.id} className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><img src={tapa.imageUrl} alt="" className="aspect-square w-full object-cover" /><div className="min-w-0 p-2.5 sm:p-4"><h3 className="line-clamp-2 min-w-0 text-sm font-black sm:text-base">{tapa.name}</h3><p className="mt-1 truncate text-[11px] text-slate-500 sm:text-sm">{tapa.participantNames.join(", ")}</p><div className="mt-2 grid gap-1.5"><Link href={`/admin/tapas/${tapa.id}`} className="min-w-0 rounded-lg border border-[var(--primary)] px-1 py-2 text-center text-xs font-bold text-[var(--primary)]">Editar</Link><form className="min-w-0" action={`/admin/tapas/${tapa.id}/delete`} method="post"><button className="w-full min-w-0 rounded-lg border border-red-200 px-1 py-2 text-xs font-bold text-red-700">Borrar</button></form></div></div></article>)}</div>
       </section>

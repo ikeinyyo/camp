@@ -5,7 +5,7 @@ import { TableClient, type TableEntity } from "@azure/data-tables";
 import { STORAGE_SETTINGS } from "@/config/storage";
 import { awardUserPoints } from "./users";
 
-export type PointSource = "voucher" | "activity" | "game";
+export type PointSource = "voucher" | "activity" | "game" | "lottery";
 export type PointMethod = "qr" | "manual" | "game";
 
 export type PointMovement = {

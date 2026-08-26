@@ -64,7 +64,7 @@ export default async function AdminHomePage({ searchParams }: AdminHomePageProps
         <AdminNavigation active="users" />
 
         <nav aria-label="Más opciones de administración" className="grid grid-cols-2 gap-2 py-4 md:hidden">
-          {[{ href: "/admin/activities", label: "Actividades" }, { href: "/admin/vouchers", label: "Vales" }, { href: "/admin/sections", label: "Secciones" }, { href: "/admin/ranking", label: "Ranking" }, { href: "/admin/games", label: "Juegos" }, { href: "/admin/domino", label: "Dominó" }, { href: "/admin/users/new", label: "Crear usuario" }].map((item) => <Link key={item.href} href={item.href} className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-center text-sm font-bold text-[var(--primary-dark)] shadow-sm">{item.label}</Link>)}
+          {[{ href: "/admin/activities", label: "Actividades" }, { href: "/admin/vouchers", label: "Vales" }, { href: "/admin/sections", label: "Secciones" }, { href: "/admin/ranking", label: "Ranking" }, { href: "/admin/games", label: "Juegos" }, { href: "/admin/domino", label: "Dominó" }, { href: "/admin/sorteo", label: "Sorteo" }, { href: "/admin/users/new", label: "Crear usuario" }].map((item) => <Link key={item.href} href={item.href} className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-center text-sm font-bold text-[var(--primary-dark)] shadow-sm">{item.label}</Link>)}
         </nav>
 
         <section className="py-3 sm:py-10">
