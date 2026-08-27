@@ -10,6 +10,7 @@ export const STORAGE_SETTINGS = {
     ranking: "Ranking",
     games: "Games",
     domino: "Domino",
+    bingo: "Bingo",
   },
   containers: {
     userAvatars: "user-avatars",
