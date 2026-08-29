@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { BsTrophyFill } from "react-icons/bs";
 import { getRankedUsers } from "@/lib/ranking-data";
@@ -8,6 +9,8 @@ import { isSectionEnabled } from "@/lib/sections";
 import { UserAvatar } from "@/features/users/UserAvatar";
 import { FinalScoreCarousel } from "@/features/ranking/FinalScoreCarousel";
 import { getRankingConfig } from "@/lib/ranking-mode";
+import { HIDDEN_RANKING_SIZE, randomizeHiddenLeaders } from "@/lib/ranking-privacy";
+import { readUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-session";
 
 export const metadata: Metadata = {
   title: "Ranking | Gallardo Camp 2026",
@@ -22,12 +25,16 @@ const podiumStyles: Record<number, string> = {
 };
 
 export default async function RankingPage() {
-  const [rankingEnabled, users, config] = await Promise.all([
+  const [rankingEnabled, users, config, cookieStore] = await Promise.all([
     isSectionEnabled("ranking"),
     getRankedUsers(),
     getRankingConfig(),
+    cookies(),
   ]);
   if (!rankingEnabled) redirect("/");
+  const session = readUserSessionToken(cookieStore.get(USER_COOKIE_NAME)?.value);
+  const hiddenMode = config.mode === "hidden";
+  const displayedUsers = hiddenMode ? randomizeHiddenLeaders(users) : users;
   const tieBreakLabels = new Map<string, string>();
   for (let start = 0; start < users.length;) {
     let end = start + 1;
@@ -94,6 +101,13 @@ export default async function RankingPage() {
           </ol>
         </details>
 
+        {hiddenMode && users.length > 0 && (
+          <div className="mt-8 rounded-2xl border border-violet-200 bg-violet-50 px-5 py-4 text-center text-sm leading-6 text-violet-800">
+            <strong className="block text-base">El top 5 está en secreto</strong>
+            Sus participantes aparecen en orden aleatorio y sin puntuación, salvo que estés viendo la tuya. La clasificación real continúa desde el sexto puesto.
+          </div>
+        )}
+
         {users.length === 0 ? (
           <div className="mt-10 rounded-3xl border border-dashed border-slate-300 p-10 text-center text-slate-600">
             Todavía no hay participantes en el ranking.
@@ -120,22 +134,24 @@ export default async function RankingPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {users.map((user) => (
+                {displayedUsers.map((user) => {
+                  const hiddenLeader = hiddenMode && user.rank <= HIDDEN_RANKING_SIZE;
+                  return (
                   <tr
                     key={user.id}
                     className={
-                      user.rank <= 3 ? "bg-[var(--primary-subtle)]/50" : ""
+                      hiddenLeader ? "bg-violet-50/70" : user.rank <= 3 ? "bg-[var(--primary-subtle)]/50" : ""
                     }
                   >
                     <td className="px-2 py-2.5 text-center sm:px-4 sm:py-4">
                       <span className="inline-flex items-center justify-center gap-1 text-base font-black text-[var(--primary-dark)] sm:gap-2 sm:text-lg">
-                        {podiumStyles[user.rank] && (
+                        {!hiddenLeader && podiumStyles[user.rank] && (
                           <BsTrophyFill
                             aria-hidden="true"
                             className={podiumStyles[user.rank]}
                           />
                         )}
-                        {user.rank}.º
+                        {hiddenLeader ? "Top 5" : `${user.rank}.º`}
                       </span>
                     </td>
                     <td className="min-w-0 px-2 py-2.5 sm:px-4 sm:py-4">
@@ -151,15 +167,16 @@ export default async function RankingPage() {
                           <span className="block truncate font-bold">
                             {user.displayName}
                           </span>
-                          {tieBreakLabels.has(user.id) ? <span className="mt-0.5 flex min-w-0 items-center gap-2"><span className="max-w-full truncate rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-black text-orange-700 sm:text-xs">{tieBreakLabels.get(user.id)}</span><span className="hidden min-w-0 truncate text-sm text-slate-500 sm:block">{user.status || `@${user.username}`}</span></span> : <span className="block truncate text-sm leading-5 text-slate-500">{user.status || `@${user.username}`}</span>}
+                          {!hiddenLeader && tieBreakLabels.has(user.id) ? <span className="mt-0.5 flex min-w-0 items-center gap-2"><span className="max-w-full truncate rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-black text-orange-700 sm:text-xs">{tieBreakLabels.get(user.id)}</span><span className="hidden min-w-0 truncate text-sm text-slate-500 sm:block">{user.status || `@${user.username}`}</span></span> : <span className="block truncate text-sm leading-5 text-slate-500">{user.status || `@${user.username}`}</span>}
                         </span>
                       </Link>
                     </td>
                     <td className="whitespace-nowrap py-2.5 pl-2 pr-3 text-right text-lg font-black text-[var(--accent)] sm:px-4 sm:py-4 sm:text-xl">
-                      {user.points}
+                      {hiddenLeader && user.id !== session?.activeUserId ? <span className="text-base text-violet-600" aria-label="Puntuación oculta">•••</span> : user.points}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -4,6 +4,7 @@ import {
   USER_COOKIE_NAME,
   USER_SESSION_MAX_AGE,
   createUserSessionToken,
+  getSafeSessionReturnPath,
   readUserSessionToken,
 } from "@/lib/user-session";
 
@@ -15,7 +16,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(getRequestUrl(request, "/login"), 303);
   }
 
-  const response = NextResponse.redirect(getRequestUrl(request, "/perfil"), 303);
+  const returnTo = getSafeSessionReturnPath(formData.get("returnTo"));
+  const response = NextResponse.redirect(getRequestUrl(request, returnTo), 303);
   response.cookies.set({
     name: USER_COOKIE_NAME,
     value: createUserSessionToken({ ...session, activeUserId: userId }),

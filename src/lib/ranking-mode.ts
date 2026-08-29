@@ -6,7 +6,7 @@ import { STORAGE_SETTINGS } from "@/config/storage";
 const PARTITION = "config";
 const ROW = "mode";
 
-export type RankingMode = "live" | "final";
+export type RankingMode = "live" | "hidden" | "final";
 export type RankingConfig = { mode: RankingMode; showPrizes: boolean };
 type RankingConfigEntity = TableEntity<{ mode: RankingMode; showPrizes?: boolean; updatedAt: string }>;
 
@@ -43,7 +43,7 @@ export async function getRankingMode(): Promise<RankingMode> {
 }
 
 export async function setRankingMode(mode: RankingMode) {
-  if (mode !== "live" && mode !== "final") throw new Error("Modo de ranking no válido.");
+  if (mode !== "live" && mode !== "hidden" && mode !== "final") throw new Error("Modo de ranking no válido.");
   await (await table()).upsertEntity<RankingConfigEntity>({ partitionKey: PARTITION, rowKey: ROW, mode, updatedAt: new Date().toISOString() }, "Merge");
 }
 

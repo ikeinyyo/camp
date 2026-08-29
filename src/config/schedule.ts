@@ -16,6 +16,7 @@ export type ScheduleEvent = {
 
 export type ScheduleDay = {
   id: string;
+  isoDate: string;
   date: string;
   shortDate: string;
   events: ScheduleEvent[];
@@ -24,6 +25,7 @@ export type ScheduleDay = {
 export const schedule: ScheduleDay[] = [
   {
     id: "friday",
+    isoDate: "2026-08-28",
     date: "Viernes 28 de agosto",
     shortDate: "Vie 28",
     events: [
@@ -42,6 +44,7 @@ export const schedule: ScheduleDay[] = [
   },
   {
     id: "saturday",
+    isoDate: "2026-08-29",
     date: "Sábado 29 de agosto",
     shortDate: "Sáb 29",
     events: [
@@ -106,6 +109,7 @@ export const schedule: ScheduleDay[] = [
   },
   {
     id: "sunday",
+    isoDate: "2026-08-30",
     date: "Domingo 30 de agosto",
     shortDate: "Dom 30",
     events: [

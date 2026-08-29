@@ -71,3 +71,18 @@ export function removeUserFromSession(
       session.activeUserId === userId ? userIds[0] : session.activeUserId,
   };
 }
+
+export function getSafeSessionReturnPath(
+  value: FormDataEntryValue | null,
+  fallback = "/perfil",
+) {
+  if (
+    typeof value !== "string" ||
+    !value.startsWith("/") ||
+    value.startsWith("//") ||
+    value.includes("\\")
+  ) {
+    return fallback;
+  }
+  return value;
+}

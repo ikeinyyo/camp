@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   addUserToSession,
   createUserSessionToken,
+  getSafeSessionReturnPath,
   readUserSessionToken,
   removeUserFromSession,
 } from "./user-session";
@@ -55,5 +56,17 @@ describe("user session", () => {
         "user-1",
       ),
     ).toBeNull();
+  });
+
+  it("conserva una ruta interna al cambiar de usuario", () => {
+    expect(getSafeSessionReturnPath("/vales?buscar=mesa#catalogo")).toBe(
+      "/vales?buscar=mesa#catalogo",
+    );
+  });
+
+  it("rechaza destinos externos al cambiar de usuario", () => {
+    expect(getSafeSessionReturnPath("https://example.com")).toBe("/perfil");
+    expect(getSafeSessionReturnPath("//example.com")).toBe("/perfil");
+    expect(getSafeSessionReturnPath("/\\example.com")).toBe("/perfil");
   });
 });

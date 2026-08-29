@@ -142,8 +142,15 @@ export function NavBar({
                 <div className="p-2">
                   {activeUsers.map((user) => (
                     <div key={user.id} className={`flex items-center rounded-xl ${user.id === activeUser.id ? "bg-[var(--accent-subtle)]" : ""}`}>
-                      <form action="/session/active" method="post" className="min-w-0 flex-1" onSubmit={() => window.setTimeout(() => setIsAccessOpen(false), 0)}>
+                      <form action="/session/active" method="post" className="min-w-0 flex-1" onSubmit={(event) => {
+                        const returnTo = event.currentTarget.elements.namedItem("returnTo");
+                        if (returnTo instanceof HTMLInputElement) {
+                          returnTo.value = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+                        }
+                        window.setTimeout(() => setIsAccessOpen(false), 0);
+                      }}>
                         <input type="hidden" name="userId" value={user.id} />
+                        <input type="hidden" name="returnTo" value={pathname} readOnly />
                         <button type="submit" className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition hover:bg-[var(--primary-subtle)]">
                           <span className="mr-1 shrink-0"><UserAvatar user={user} className="h-9 w-9" textClassName="text-sm" /></span>
                           <span className="min-w-0 flex-1">

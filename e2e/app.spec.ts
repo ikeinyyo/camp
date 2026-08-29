@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import packageJson from "../package.json";
 import { schedule } from "../src/config/schedule";
+import { getInitialScheduleDayIndex } from "../src/lib/schedule-navigation";
 
 const domino = schedule
   .flatMap((day) => day.events)
@@ -75,20 +76,11 @@ test("permite consultar la agenda y sus detalles", async ({ page }, testInfo) =>
   ).toBeVisible();
 
   if (testInfo.project.name.includes("mobile")) {
-    await expect(page.getByText("Vie 28", { exact: true })).toBeVisible();
-    await expect(
-      page
-        .getByRole("region", { name: "Viernes 28 de agosto" })
-        .getByText("22:00", { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page
-        .getByRole("region", { name: "Viernes 28 de agosto" })
-        .getByText("09:00", { exact: true }),
-    ).not.toBeVisible();
-    await page.getByRole("button", { name: "Día siguiente" }).click();
-    await expect(page.getByText("Sáb 29", { exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Día siguiente" }).click();
+    const initialDayIndex = getInitialScheduleDayIndex(schedule);
+    await expect(page.getByText(schedule[initialDayIndex].shortDate, { exact: true })).toBeVisible();
+    for (let index = initialDayIndex; index < schedule.length - 1; index += 1) {
+      await page.getByRole("button", { name: "Día siguiente" }).click();
+    }
     await expect(page.getByText("Dom 30", { exact: true })).toBeVisible();
     await expect(
       page

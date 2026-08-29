@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent } from "react";
 import {
   BsGeoAltFill,
   BsPeopleFill,
@@ -10,6 +10,7 @@ import {
 } from "react-icons/bs";
 import { getMapZone } from "@/config/locations";
 import type { ScheduleDay, ScheduleEvent } from "@/config/schedule";
+import { getInitialScheduleDayIndex, getSwipeDirection } from "@/lib/schedule-navigation";
 
 const START_HOUR = 9;
 const END_HOUR = 25;
@@ -297,13 +298,33 @@ export function ScheduleEventDialog({
 }
 
 export function Schedule({ schedule, canRequestPoints = false, activeUserName }: { schedule: ScheduleDay[]; canRequestPoints?: boolean; activeUserName?: string }) {
-  const [selectedDay, setSelectedDay] = useState(0);
+  const [selectedDay, setSelectedDay] = useState(() => getInitialScheduleDayIndex(schedule));
   const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const suppressClickRef = useRef(false);
 
   const changeDay = (direction: -1 | 1) => {
     setSelectedDay((current) =>
       Math.min(Math.max(current + direction, 0), schedule.length - 1),
     );
+  };
+
+  const startSwipe = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "touch") return;
+    swipeStartRef.current = { x: event.clientX, y: event.clientY };
+  };
+
+  const finishSwipe = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "touch" || !swipeStartRef.current) return;
+    const direction = getSwipeDirection(swipeStartRef.current, {
+      x: event.clientX,
+      y: event.clientY,
+    });
+    swipeStartRef.current = null;
+    if (direction === 0) return;
+    suppressClickRef.current = true;
+    changeDay(direction);
+    window.setTimeout(() => { suppressClickRef.current = false; }, 0);
   };
 
   return (
@@ -329,7 +350,7 @@ export function Schedule({ schedule, canRequestPoints = false, activeUserName }:
           >
             ‹
           </button>
-          <span className="font-bold">{schedule[selectedDay].shortDate}</span>
+          <span aria-live="polite" className="font-bold">{schedule[selectedDay].shortDate}</span>
           <button
             type="button"
             onClick={() => changeDay(1)}
@@ -340,7 +361,19 @@ export function Schedule({ schedule, canRequestPoints = false, activeUserName }:
             ›
           </button>
         </nav>
-        <div className="overflow-hidden border-y border-slate-200 bg-white">
+        <p className="mb-3 text-center text-xs font-semibold text-slate-500">Desliza a izquierda o derecha para cambiar de día</p>
+        <div
+          className="touch-pan-y overflow-hidden border-y border-slate-200 bg-white"
+          onPointerDown={startSwipe}
+          onPointerUp={finishSwipe}
+          onPointerCancel={() => { swipeStartRef.current = null; }}
+          onClickCapture={(event) => {
+            if (!suppressClickRef.current) return;
+            event.preventDefault();
+            event.stopPropagation();
+            suppressClickRef.current = false;
+          }}
+        >
           <DayTimeline
             day={schedule[selectedDay]}
             onSelectEvent={setSelectedEvent}

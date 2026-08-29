@@ -10,6 +10,14 @@ describe("schedule configuration", () => {
     ]);
   });
 
+  it("asocia cada jornada con su fecha del calendario", () => {
+    expect(schedule.map((day) => day.isoDate)).toEqual([
+      "2026-08-28",
+      "2026-08-29",
+      "2026-08-30",
+    ]);
+  });
+
   it("define todos los detalles necesarios para cada actividad", () => {
     for (const day of schedule) {
       for (const event of day.events) {

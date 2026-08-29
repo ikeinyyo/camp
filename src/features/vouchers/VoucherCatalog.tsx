@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { BsCheck2Circle, BsPeople, BsTicketPerforated, BsX } from "react-icons/bs";
+import { BsCheck2Circle, BsPeople, BsSearch, BsTicketPerforated, BsX } from "react-icons/bs";
 import { VOUCHER_CATEGORIES } from "@/config/vouchers";
 import { UserAvatar } from "@/features/users/UserAvatar";
 import type { Voucher, VoucherClaim } from "@/lib/vouchers";
+import { filterVouchersByTitle } from "@/lib/voucher-search";
 import type { User } from "@/lib/users";
 
 type ClaimResponse = { claim: VoucherClaim; qrCode: string; payload: string };
@@ -20,11 +21,13 @@ export function VoucherCatalog({ vouchers: initialVouchers, activeUser, users, r
   const [error, setError] = useState("");
   const [confirmingReservation, setConfirmingReservation] = useState(false);
   const [reservationMessage, setReservationMessage] = useState("");
+  const [query, setQuery] = useState("");
   const usersById = new Map(users.map((user) => [user.id, user]));
-  const reservedVouchers = vouchers.filter((voucher) => voucher.reservedUserIds.includes(activeUserId));
+  const filteredVouchers = filterVouchersByTitle(vouchers, query);
+  const reservedVouchers = filteredVouchers.filter((voucher) => voucher.reservedUserIds.includes(activeUserId));
   const voucherGroups = [
     ...(reservedVouchers.length > 0 ? [{ id: "reserved", name: "Tus vales reservados", description: "Tus plazas confirmadas aparecen primero para que puedas encontrarlas rápidamente.", vouchers: reservedVouchers }] : []),
-    ...VOUCHER_CATEGORIES.map((category) => ({ ...category, vouchers: vouchers.filter((voucher) => voucher.category === category.id && !voucher.reservedUserIds.includes(activeUserId)) })),
+    ...VOUCHER_CATEGORIES.map((category) => ({ ...category, vouchers: filteredVouchers.filter((voucher) => voucher.category === category.id && !voucher.reservedUserIds.includes(activeUserId)) })),
   ];
 
   useEffect(() => {
@@ -99,7 +102,17 @@ export function VoucherCatalog({ vouchers: initialVouchers, activeUser, users, r
 
   return (
     <>
+      <div className="mx-auto mb-10 max-w-2xl">
+        <label htmlFor="voucher-search" className="sr-only">Buscar vales por título</label>
+        <div className="relative">
+          <BsSearch aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl text-slate-400" />
+          <input id="voucher-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar vales por título…" className="min-h-14 w-full rounded-2xl border border-slate-300 bg-white py-3 pl-12 pr-12 text-base shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] [&::-webkit-search-cancel-button]:appearance-none" />
+          {query && <button type="button" onClick={() => setQuery("")} aria-label="Borrar búsqueda" className="absolute right-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full text-xl text-slate-500 hover:bg-slate-100"><BsX aria-hidden="true" /></button>}
+        </div>
+        {query.trim() && <p role="status" className="mt-3 text-center text-sm font-semibold text-slate-600">{filteredVouchers.length === 1 ? "1 vale encontrado" : `${filteredVouchers.length} vales encontrados`}</p>}
+      </div>
       <div className="grid gap-12">
+        {filteredVouchers.length === 0 && query.trim() && <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center"><strong className="block text-lg text-slate-800">No hay vales con ese título</strong><span className="mt-2 block text-sm text-slate-500">Prueba con otra palabra o borra la búsqueda.</span></div>}
         {voucherGroups.map((category) => {
           const categoryVouchers = category.vouchers;
           if (categoryVouchers.length === 0) return null;
