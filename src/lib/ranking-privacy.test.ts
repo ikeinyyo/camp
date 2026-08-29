@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canViewRankedUserScore, randomizeHiddenLeaders } from "./ranking-privacy";
+import { canViewRankedUserScore, isRankHidden, randomizeHiddenLeaders } from "./ranking-privacy";
 
 const users = Array.from({ length: 7 }, (_, index) => ({
   id: String(index + 1),
@@ -31,5 +31,14 @@ describe("canViewRankedUserScore", () => {
   it("mantiene visibles los puntos desde el sexto puesto y fuera del modo oculto", () => {
     expect(canViewRankedUserScore({ hiddenMode: true, rank: 6, profileUserId: "6" })).toBe(true);
     expect(canViewRankedUserScore({ hiddenMode: false, rank: 1, profileUserId: "1" })).toBe(true);
+  });
+});
+
+describe("isRankHidden", () => {
+  it("oculta el puesto exacto del top 5 incluso a su propietario", () => {
+    expect(isRankHidden(true, 1)).toBe(true);
+    expect(isRankHidden(true, 5)).toBe(true);
+    expect(isRankHidden(true, 6)).toBe(false);
+    expect(isRankHidden(false, 1)).toBe(false);
   });
 });
