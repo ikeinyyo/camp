@@ -2,6 +2,10 @@ import type { RankedUser, RankingUser } from "./ranking";
 
 export const HIDDEN_RANKING_SIZE = 5;
 
+export function isRankHidden(hiddenMode: boolean, rank: number | undefined) {
+  return hiddenMode && rank !== undefined && rank <= HIDDEN_RANKING_SIZE;
+}
+
 export function randomizeHiddenLeaders<T extends RankedUser<RankingUser>>(
   users: T[],
   random: () => number = Math.random,
